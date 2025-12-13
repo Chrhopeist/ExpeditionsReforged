@@ -101,7 +101,8 @@ public class ExpeditionUI : UIState
 
         var registry = ModContent.GetInstance<ExpeditionRegistry>();
 
-        foreach (var definition in registry.Definitions.Values)
+        // registry.Definitions is an IReadOnlyCollection<ExpeditionDefinition>, so iterate it directly.
+        foreach (var definition in registry.Definitions)
         {
             var entry = new ExpeditionListEntry(this, definition.Id, definition.DisplayName);
 
