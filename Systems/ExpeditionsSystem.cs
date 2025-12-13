@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.ModLoader;
 using Terraria.UI;
 using ExpeditionsReforged.UI;
+using ExpeditionsReforged.Players;
 
 namespace ExpeditionsReforged.Systems
 {
@@ -49,6 +50,8 @@ namespace ExpeditionsReforged.Systems
 
         public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
         {
+            ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
+
             int mouseTextIndex = layers.FindIndex(layer => layer.Name.Equals("Vanilla: Mouse Text"));
 
             if (mouseTextIndex != -1)
@@ -57,7 +60,7 @@ namespace ExpeditionsReforged.Systems
                     "ExpeditionsReforged: Tracker UI",
                     delegate
                     {
-                        if (_trackerInterface?.CurrentState != null)
+                        if (expeditionsPlayer != null && expeditionsPlayer.TrackerUIOpen && _trackerInterface?.CurrentState != null)
                         {
                             _trackerInterface.Draw(Main.spriteBatch, new GameTime());
                         }
@@ -70,7 +73,7 @@ namespace ExpeditionsReforged.Systems
                     "ExpeditionsReforged: Expedition UI",
                     delegate
                     {
-                        if (_expeditionInterface?.CurrentState != null)
+                        if (expeditionsPlayer != null && expeditionsPlayer.ExpeditionUIOpen && _expeditionInterface?.CurrentState != null)
                         {
                             _expeditionInterface.Draw(Main.spriteBatch, new GameTime());
                         }
