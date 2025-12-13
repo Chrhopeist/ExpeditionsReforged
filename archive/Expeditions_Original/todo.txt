@@ -1,0 +1,24 @@
+Fix stockbox item pool. possibly use equipped armour as rarity? or more normal rewards.
+
+Filter by NPC Head
+For the future: Filter by tracking
+
+Known Bugs:
+* Mouse down on completing quest when next quest in line's compelte is in same place gracefully crashes the UI
+========= fixed testing =========
+* 
+
+Delete all progress [O][K][0]
+Discard Unknowns [#]
+
+git commit -m '$(curl -s http://whatthecommit.com/index.txt)'\
+
+http://javid.ddns.net/tModLoader/widget/widgetimage/Expeditions.png
+
+Credits:
+Flashkirby99 - I am making this mod.
+jopojelly - Additional advice on mod referencing and .tmod usage
+
+REMINDER:
+Compile, 
+\Expeditions\bin\Debug move .dll and .xml to ExpeditionAddons template
