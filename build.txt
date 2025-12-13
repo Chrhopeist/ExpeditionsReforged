@@ -1,0 +1,3 @@
+displayName = Expeditions Reforged
+author = Chrhopeist
+version = 0.1
