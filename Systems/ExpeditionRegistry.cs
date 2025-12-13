@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.Linq;
 using ExpeditionsReforged.Content.Expeditions;
 using Terraria.ModLoader;
 
@@ -12,19 +12,19 @@ namespace ExpeditionsReforged.Systems
     /// </summary>
     public class ExpeditionRegistry : ModSystem
     {
-        private ImmutableDictionary<string, ExpeditionDefinition> _definitions =
-            ImmutableDictionary<string, ExpeditionDefinition>.Empty.WithComparers(StringComparer.Ordinal);
+        private Dictionary<string, ExpeditionDefinition> _definitions = new(StringComparer.Ordinal);
+        private IReadOnlyCollection<ExpeditionDefinition> _definitionCollection = Array.Empty<ExpeditionDefinition>();
 
         /// <summary>
-        /// Read-only view of all registered expedition definitions keyed by their unique IDs.
+        /// Read-only view of all registered expedition definitions.
         /// </summary>
-        public IReadOnlyDictionary<string, ExpeditionDefinition> Definitions => _definitions;
+        public IReadOnlyCollection<ExpeditionDefinition> Definitions => _definitionCollection;
 
         public override void Load()
         {
-            var builder = ImmutableDictionary.CreateBuilder<string, ExpeditionDefinition>(StringComparer.Ordinal);
+            var definitions = new Dictionary<string, ExpeditionDefinition>(StringComparer.Ordinal);
 
-            RegisterExpedition(builder, new ExpeditionDefinition(
+            RegisterExpedition(definitions, new ExpeditionDefinition(
                 id: "expeditions:forest_scout",
                 displayName: "Forest Scout",
                 durationTicks: 60 * 60 * 8,
@@ -32,7 +32,7 @@ namespace ExpeditionsReforged.Systems
                 minPlayerLevel: 1,
                 isRepeatable: true));
 
-            RegisterExpedition(builder, new ExpeditionDefinition(
+            RegisterExpedition(definitions, new ExpeditionDefinition(
                 id: "expeditions:desert_run",
                 displayName: "Desert Run",
                 durationTicks: 60 * 60 * 12,
@@ -40,7 +40,7 @@ namespace ExpeditionsReforged.Systems
                 minPlayerLevel: 3,
                 isRepeatable: true));
 
-            RegisterExpedition(builder, new ExpeditionDefinition(
+            RegisterExpedition(definitions, new ExpeditionDefinition(
                 id: "expeditions:dungeon_probe",
                 displayName: "Dungeon Probe",
                 durationTicks: 60 * 60 * 24,
@@ -48,38 +48,40 @@ namespace ExpeditionsReforged.Systems
                 minPlayerLevel: 6,
                 isRepeatable: false));
 
-            _definitions = builder.ToImmutable();
+            _definitions = definitions;
+            _definitionCollection = definitions.Values.ToList();
         }
 
         public override void Unload()
         {
-            _definitions = ImmutableDictionary<string, ExpeditionDefinition>.Empty.WithComparers(StringComparer.Ordinal);
+            _definitions = new Dictionary<string, ExpeditionDefinition>(StringComparer.Ordinal);
+            _definitionCollection = Array.Empty<ExpeditionDefinition>();
         }
 
         /// <summary>
         /// Retrieves a read-only collection of all registered expedition definitions.
         /// </summary>
-        public IReadOnlyCollection<ExpeditionDefinition> GetAll() => _definitions.Values;
+        public IReadOnlyCollection<ExpeditionDefinition> GetAll() => _definitionCollection;
 
         /// <summary>
         /// Attempts to retrieve a registered expedition definition by its ID.
         /// </summary>
-        /// <param name="id">Expedition identifier to look up.</param>
+        /// <param name="expeditionId">Expedition identifier to look up.</param>
         /// <param name="definition">Matching definition if found.</param>
         /// <returns>True if the definition exists; otherwise false.</returns>
-        public bool TryGetById(string id, out ExpeditionDefinition definition)
+        public bool TryGetDefinition(string expeditionId, out ExpeditionDefinition definition)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(expeditionId))
             {
                 definition = null;
                 return false;
             }
 
-            return _definitions.TryGetValue(id, out definition);
+            return _definitions.TryGetValue(expeditionId, out definition);
         }
 
         private static void RegisterExpedition(
-            ImmutableDictionary<string, ExpeditionDefinition>.Builder builder,
+            Dictionary<string, ExpeditionDefinition> definitions,
             ExpeditionDefinition definition)
         {
             if (definition is null)
@@ -100,10 +102,10 @@ namespace ExpeditionsReforged.Systems
             if (definition.MinPlayerLevel < 0)
                 throw new ArgumentOutOfRangeException(nameof(definition), "Minimum player level cannot be negative.");
 
-            if (builder.ContainsKey(definition.Id))
+            if (definitions.ContainsKey(definition.Id))
                 throw new InvalidOperationException($"Duplicate expedition id '{definition.Id}' detected during registration.");
 
-            builder.Add(definition.Id, definition);
+            definitions.Add(definition.Id, definition);
         }
     }
 }
