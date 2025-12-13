@@ -24,29 +24,7 @@ namespace ExpeditionsReforged.Systems
         {
             var definitions = new Dictionary<string, ExpeditionDefinition>(StringComparer.Ordinal);
 
-            RegisterExpedition(definitions, new ExpeditionDefinition(
-                id: "expeditions:forest_scout",
-                displayName: "Forest Scout",
-                durationTicks: 60 * 60 * 8,
-                difficulty: 1,
-                minPlayerLevel: 1,
-                isRepeatable: true));
-
-            RegisterExpedition(definitions, new ExpeditionDefinition(
-                id: "expeditions:desert_run",
-                displayName: "Desert Run",
-                durationTicks: 60 * 60 * 12,
-                difficulty: 2,
-                minPlayerLevel: 3,
-                isRepeatable: true));
-
-            RegisterExpedition(definitions, new ExpeditionDefinition(
-                id: "expeditions:dungeon_probe",
-                displayName: "Dungeon Probe",
-                durationTicks: 60 * 60 * 24,
-                difficulty: 4,
-                minPlayerLevel: 6,
-                isRepeatable: false));
+            RegisterInternalExpeditions(definitions);
 
             _definitions = definitions;
             _definitionCollection = definitions.Values.ToList();
@@ -80,6 +58,117 @@ namespace ExpeditionsReforged.Systems
             return _definitions.TryGetValue(expeditionId, out definition);
         }
 
+        /// <summary>
+        /// Registers an expedition definition, performing validation and cloning to ensure immutability.
+        /// Safe for mod authors to call during loading to extend the registry.
+        /// </summary>
+        public void RegisterExpedition(ExpeditionDefinition definition)
+        {
+            RegisterExpedition(_definitions, definition);
+            _definitionCollection = _definitions.Values.ToList();
+        }
+
+        /// <summary>
+        /// Returns expeditions that belong to the given category (case-insensitive).
+        /// </summary>
+        public IEnumerable<ExpeditionDefinition> GetByCategory(string category)
+        {
+            if (string.IsNullOrWhiteSpace(category))
+                return Enumerable.Empty<ExpeditionDefinition>();
+
+            return _definitionCollection.Where(d => string.Equals(d.Category, category, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Returns expeditions that satisfy a predicate against player progress state.
+        /// </summary>
+        public IEnumerable<ExpeditionDefinition> FilterByProgress(IEnumerable<ExpeditionProgress> progressStates, Func<ExpeditionDefinition, ExpeditionProgress?, bool> predicate)
+        {
+            if (progressStates is null)
+                throw new ArgumentNullException(nameof(progressStates));
+
+            if (predicate is null)
+                throw new ArgumentNullException(nameof(predicate));
+
+            var progressLookup = progressStates.ToDictionary(p => p.ExpeditionId, StringComparer.OrdinalIgnoreCase);
+            foreach (var definition in _definitionCollection)
+            {
+                progressLookup.TryGetValue(definition.Id, out var progress);
+                if (predicate(definition, progress))
+                {
+                    yield return definition;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves expeditions that are eligible for daily selection.
+        /// </summary>
+        public IEnumerable<ExpeditionDefinition> GetDailyEligible() => _definitionCollection.Where(d => d.IsDailyEligible);
+
+        /// <summary>
+        /// Provides a cloned instance of the expedition with a stable progress hash for a specific player.
+        /// </summary>
+        public ExpeditionDefinition CloneForPlayer(string expeditionId, int playerId)
+        {
+            if (!TryGetDefinition(expeditionId, out var definition))
+                throw new KeyNotFoundException($"Unknown expedition id '{expeditionId}'.");
+
+            var clone = definition.Clone();
+            _ = clone.GetStableProgressKey(playerId); // ensures the hash is calculated to keep consistency.
+            return clone;
+        }
+
+        private static void RegisterInternalExpeditions(Dictionary<string, ExpeditionDefinition> definitions)
+        {
+            RegisterExpedition(definitions, new ExpeditionDefinition(
+                id: "expeditions:forest_scout",
+                displayName: "Forest Scout",
+                category: "Forest",
+                rarity: 1,
+                durationTicks: 60 * 60 * 8,
+                difficulty: 1,
+                minPlayerLevel: 1,
+                isRepeatable: true,
+                isDailyEligible: true,
+                npcHeadId: 1,
+                prerequisites: new[] { new ConditionDefinition("boss:eye_of_cthulhu", 1, "Defeat the Eye of Cthulhu") },
+                deliverables: new[] { new DeliverableDefinition("item:wood", 30, true, "Deliver Wood") },
+                rewards: new[] { new RewardDefinition("ItemID.CopperCoin", 25, 50) },
+                dailyRewards: new[] { new RewardDefinition("ItemID.SilverCoin", 5, 15) }));
+
+            RegisterExpedition(definitions, new ExpeditionDefinition(
+                id: "expeditions:desert_run",
+                displayName: "Desert Run",
+                category: "Desert",
+                rarity: 2,
+                durationTicks: 60 * 60 * 12,
+                difficulty: 2,
+                minPlayerLevel: 3,
+                isRepeatable: true,
+                isDailyEligible: true,
+                npcHeadId: 2,
+                prerequisites: new[] { new ConditionDefinition("unlock:desert", 1, "Discover the desert") },
+                deliverables: new[] { new DeliverableDefinition("item:cactus", 15, true, "Gather Cactus") },
+                rewards: new[] { new RewardDefinition("ItemID.GoldCoin", 1, 2) },
+                dailyRewards: new[] { new RewardDefinition("ItemID.SilverCoin", 10, 25) }));
+
+            RegisterExpedition(definitions, new ExpeditionDefinition(
+                id: "expeditions:dungeon_probe",
+                displayName: "Dungeon Probe",
+                category: "Dungeon",
+                rarity: 3,
+                durationTicks: 60 * 60 * 24,
+                difficulty: 4,
+                minPlayerLevel: 6,
+                isRepeatable: false,
+                isDailyEligible: false,
+                npcHeadId: 3,
+                prerequisites: new[] { new ConditionDefinition("boss:skeletron", 1, "Defeat Skeletron") },
+                deliverables: new[] { new DeliverableDefinition("item:bone", 20, true, "Collect Bones") },
+                rewards: new[] { new RewardDefinition("ItemID.GoldCoin", 5, 5), new RewardDefinition("ItemID.ShadowKey", 1, 1, 0.5f) }));
+        }
+
         private static void RegisterExpedition(
             Dictionary<string, ExpeditionDefinition> definitions,
             ExpeditionDefinition definition)
@@ -102,10 +191,38 @@ namespace ExpeditionsReforged.Systems
             if (definition.MinPlayerLevel < 0)
                 throw new ArgumentOutOfRangeException(nameof(definition), "Minimum player level cannot be negative.");
 
+            if (definition.Rarity < 0)
+                throw new ArgumentOutOfRangeException(nameof(definition), "Rarity cannot be negative.");
+
+            ValidateCollections(definition);
+
             if (definitions.ContainsKey(definition.Id))
                 throw new InvalidOperationException($"Duplicate expedition id '{definition.Id}' detected during registration.");
 
-            definitions.Add(definition.Id, definition);
+            definitions.Add(definition.Id, definition.Clone());
+        }
+
+        private static void ValidateCollections(ExpeditionDefinition definition)
+        {
+            foreach (var prerequisite in definition.Prerequisites)
+            {
+                _ = prerequisite ?? throw new ArgumentException("Null prerequisite definition detected.", nameof(definition));
+            }
+
+            foreach (var deliverable in definition.Deliverables)
+            {
+                _ = deliverable ?? throw new ArgumentException("Null deliverable definition detected.", nameof(definition));
+            }
+
+            foreach (var reward in definition.Rewards)
+            {
+                _ = reward ?? throw new ArgumentException("Null reward definition detected.", nameof(definition));
+            }
+
+            foreach (var reward in definition.DailyRewards)
+            {
+                _ = reward ?? throw new ArgumentException("Null daily reward definition detected.", nameof(definition));
+            }
         }
     }
 }

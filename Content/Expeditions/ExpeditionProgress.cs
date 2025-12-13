@@ -48,5 +48,22 @@ namespace ExpeditionsReforged.Content.Expeditions
         {
             RewardsClaimed = true;
         }
+
+        /// <summary>
+        /// Creates a new progress entry using the stable per-player hash generated from the provided definition.
+        /// </summary>
+        public static ExpeditionProgress Create(ExpeditionDefinition definition, int playerId)
+        {
+            if (definition is null)
+                throw new ArgumentNullException(nameof(definition));
+
+            return new ExpeditionProgress
+            {
+                ExpeditionId = definition.GetStableProgressKey(playerId),
+                StartGameTick = 0,
+                RewardsClaimed = false,
+                IsCompleted = false,
+            };
+        }
     }
 }
