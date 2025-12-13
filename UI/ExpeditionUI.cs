@@ -1,6 +1,8 @@
+using System;
+using System.Collections.Generic;
+using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Systems;
 using Microsoft.Xna.Framework;
-using System.Collections.Generic;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -11,6 +13,15 @@ public class ExpeditionUI : UIState
 {
     private UIPanel _rootPanel = null!;
     private UIList _expeditionList = null!;
+    private UIPanel _detailsPanel = null!;
+    private UIList _detailsList = null!;
+    private UIText _detailsTitle = null!;
+    private UIText _detailsDuration = null!;
+    private UIText _detailsDifficulty = null!;
+    private UIText _detailsMinLevel = null!;
+    private UIText _detailsRepeatable = null!;
+    private UIText _detailsPlaceholder = null!;
+
     private readonly List<ExpeditionListEntry> _entries = new();
     private string _selectedExpeditionId = string.Empty;
 
@@ -30,23 +41,28 @@ public class ExpeditionUI : UIState
 
         Append(_rootPanel);
 
-        BuildExpeditionList();
+        BuildLayout();
     }
 
-    private void BuildExpeditionList()
+    private void BuildLayout()
     {
         _entries.Clear();
         _selectedExpeditionId = string.Empty;
 
-        _expeditionList = new UIList
+        const float listWidthPercent = 0.45f;
+
+        var listContainer = new UIElement
         {
-            ListPadding = 6f
+            Width = new StyleDimension(-8f, listWidthPercent),
+            Height = StyleDimension.FromPercent(1f)
         };
 
-        var listWidth = StyleDimension.FromPercent(1f);
-        listWidth.Pixels = -20f;
-        _expeditionList.Width = listWidth;
-        _expeditionList.Height = StyleDimension.FromPercent(1f);
+        _expeditionList = new UIList
+        {
+            ListPadding = 6f,
+            Width = StyleDimension.FromPercent(1f),
+            Height = StyleDimension.FromPercent(1f)
+        };
 
         var scrollbar = new UIScrollbar
         {
@@ -54,9 +70,34 @@ public class ExpeditionUI : UIState
         };
 
         scrollbar.Height = StyleDimension.FromPercent(1f);
-
         scrollbar.SetView(100f, 1000f);
         _expeditionList.SetScrollbar(scrollbar);
+
+        PopulateExpeditionList();
+
+        listContainer.Append(_expeditionList);
+        listContainer.Append(scrollbar);
+
+        _detailsPanel = new UIPanel
+        {
+            Left = new StyleDimension(8f, listWidthPercent),
+            Width = new StyleDimension(-8f, 1f - listWidthPercent),
+            Height = StyleDimension.FromPercent(1f),
+            BackgroundColor = new Color(40, 46, 60),
+            BorderColor = new Color(69, 82, 110)
+        };
+
+        _detailsPanel.SetPadding(12f);
+
+        BuildDetailsPanel();
+
+        _rootPanel.Append(listContainer);
+        _rootPanel.Append(_detailsPanel);
+    }
+
+    private void PopulateExpeditionList()
+    {
+        _expeditionList.Clear();
 
         var registry = ModContent.GetInstance<ExpeditionRegistry>();
 
@@ -67,19 +108,114 @@ public class ExpeditionUI : UIState
             _entries.Add(entry);
             _expeditionList.Add(entry);
         }
+    }
 
-        _rootPanel.Append(_expeditionList);
-        _rootPanel.Append(scrollbar);
+    private void BuildDetailsPanel()
+    {
+        _detailsList = new UIList
+        {
+            Width = StyleDimension.FromPercent(1f),
+            Height = StyleDimension.FromPercent(1f),
+            ListPadding = 8f
+        };
+
+        _detailsTitle = new UIText(string.Empty, 0.9f, true);
+        _detailsDuration = new UIText(string.Empty, 0.85f);
+        _detailsDifficulty = new UIText(string.Empty, 0.85f);
+        _detailsMinLevel = new UIText(string.Empty, 0.85f);
+        _detailsRepeatable = new UIText(string.Empty, 0.85f);
+
+        _detailsList.Add(_detailsTitle);
+        _detailsList.Add(_detailsDuration);
+        _detailsList.Add(_detailsDifficulty);
+        _detailsList.Add(_detailsMinLevel);
+        _detailsList.Add(_detailsRepeatable);
+
+        _detailsPlaceholder = new UIText("Select an expedition to view its details.")
+        {
+            HAlign = 0f,
+            VAlign = 0f
+        };
+
+        ShowPlaceholder();
     }
 
     private void HandleSelectionChanged(string expeditionId)
     {
         _selectedExpeditionId = expeditionId;
 
+        var registry = ModContent.GetInstance<ExpeditionRegistry>();
+
+        if (registry.TryGetDefinition(_selectedExpeditionId, out ExpeditionDefinition definition))
+        {
+            ShowDetails(definition);
+        }
+        else
+        {
+            ShowPlaceholder();
+        }
+
         foreach (var entry in _entries)
         {
             entry.SetSelected(entry.ExpeditionId == _selectedExpeditionId);
         }
+    }
+
+    private void ShowPlaceholder()
+    {
+        if (_detailsList.Parent != null)
+        {
+            _detailsPanel.RemoveChild(_detailsList);
+        }
+
+        if (_detailsPlaceholder.Parent == null)
+        {
+            _detailsPanel.Append(_detailsPlaceholder);
+        }
+
+        _detailsPlaceholder.SetText("Select an expedition to view its details.");
+    }
+
+    private void ShowDetails(ExpeditionDefinition definition)
+    {
+        if (definition == null)
+        {
+            ShowPlaceholder();
+            return;
+        }
+
+        if (_detailsPlaceholder.Parent != null)
+        {
+            _detailsPanel.RemoveChild(_detailsPlaceholder);
+        }
+
+        if (_detailsList.Parent == null)
+        {
+            _detailsPanel.Append(_detailsList);
+        }
+
+        _detailsTitle.SetText(definition.DisplayName);
+        _detailsDuration.SetText($"Duration: {FormatDuration(definition.DurationTicks)}");
+        _detailsDifficulty.SetText($"Difficulty: {definition.Difficulty}");
+        _detailsMinLevel.SetText($"Minimum Level: {definition.MinPlayerLevel}");
+        _detailsRepeatable.SetText(definition.IsRepeatable ? "Repeatable: Yes" : "Repeatable: No");
+    }
+
+    private static string FormatDuration(int durationTicks)
+    {
+        var time = TimeSpan.FromSeconds(durationTicks / 60d);
+
+        if (time.TotalHours >= 1d)
+        {
+            return $"{(int)time.TotalHours}h {time.Minutes}m";
+        }
+
+        if (time.TotalMinutes >= 1d)
+        {
+            return $"{(int)time.TotalMinutes}m {time.Seconds}s";
+        }
+
+        return $"{time.Seconds}s";
     }
 
     private class ExpeditionListEntry : UIPanel
