@@ -12,7 +12,7 @@ public class ExpeditionUI : UIState
     private UIPanel _rootPanel = null!;
     private UIList _expeditionList = null!;
     private readonly List<ExpeditionListEntry> _entries = new();
-    private string? _selectedExpeditionId;
+    private string _selectedExpeditionId = string.Empty;
 
     public override void OnInitialize()
     {
@@ -36,20 +36,24 @@ public class ExpeditionUI : UIState
     private void BuildExpeditionList()
     {
         _entries.Clear();
-        _selectedExpeditionId = null;
+        _selectedExpeditionId = string.Empty;
 
         _expeditionList = new UIList
         {
-            Width = { Pixels = -20f, Percent = 1f },
-            Height = { Percent = 1f },
             ListPadding = 6f
         };
 
+        var listWidth = StyleDimension.FromPercent(1f);
+        listWidth.Pixels = -20f;
+        _expeditionList.Width = listWidth;
+        _expeditionList.Height = StyleDimension.FromPercent(1f);
+
         var scrollbar = new UIScrollbar
         {
-            HAlign = 1f,
-            Height = { Percent = 1f }
+            HAlign = 1f
         };
+
+        scrollbar.Height = StyleDimension.FromPercent(1f);
 
         scrollbar.SetView(100f, 1000f);
         _expeditionList.SetScrollbar(scrollbar);
@@ -82,8 +86,8 @@ public class ExpeditionUI : UIState
     {
         private readonly ExpeditionUI _owner;
         private readonly UIText _label;
-        private readonly Color _defaultBackground = new(63, 82, 151) * 0.7f;
-        private readonly Color _selectedBackground = new(96, 172, 255) * 0.75f;
+        private readonly Color _defaultBackground = new(44, 57, 105);
+        private readonly Color _selectedBackground = new(72, 129, 191);
 
         public string ExpeditionId { get; }
 
@@ -92,12 +96,12 @@ public class ExpeditionUI : UIState
             _owner = owner;
             ExpeditionId = expeditionId;
 
-            Height = { Pixels = 32f };
-            Width = { Percent = 1f };
+            Height = StyleDimension.FromPixels(32f);
+            Width = StyleDimension.FromPercent(1f);
             PaddingTop = 6f;
             PaddingBottom = 6f;
             BackgroundColor = _defaultBackground;
-            BorderColor = new Color(89, 116, 213) * 0.9f;
+            BorderColor = new Color(80, 104, 192);
 
             _label = new UIText(displayName)
             {
@@ -106,17 +110,18 @@ public class ExpeditionUI : UIState
             };
 
             Append(_label);
-        }
 
-        public override void OnLeftClick(UIMouseEvent evt)
-        {
-            base.OnLeftClick(evt);
-            _owner.HandleSelectionChanged(ExpeditionId);
+            OnLeftClick += HandleLeftClick;
         }
 
         public void SetSelected(bool isSelected)
         {
             BackgroundColor = isSelected ? _selectedBackground : _defaultBackground;
+        }
+
+        private void HandleLeftClick(UIMouseEvent evt, UIElement listeningElement)
+        {
+            _owner.HandleSelectionChanged(ExpeditionId);
         }
     }
 }
