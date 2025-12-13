@@ -1,5 +1,4 @@
 using Terraria.ModLoader;
-using Terraria.ModLoader.IO;
 
 namespace ExpeditionsReforged.Players
 {
@@ -8,16 +7,10 @@ namespace ExpeditionsReforged.Players
         public bool ExpeditionUIOpen;
         public bool TrackerUIOpen;
 
-        public override void SaveData(TagCompound tag)
+        public override void OnEnterWorld()
         {
-            tag[nameof(ExpeditionUIOpen)] = ExpeditionUIOpen;
-            tag[nameof(TrackerUIOpen)] = TrackerUIOpen;
-        }
-
-        public override void LoadData(TagCompound tag)
-        {
-            ExpeditionUIOpen = tag.GetBool(nameof(ExpeditionUIOpen));
-            TrackerUIOpen = tag.GetBool(nameof(TrackerUIOpen));
+            ExpeditionUIOpen = false;
+            TrackerUIOpen = false;
         }
     }
 }
