@@ -562,42 +562,30 @@ namespace ExpeditionsReforged.Players
                 TrackedExpeditionId = string.Empty;
             }
         }
-    // Add this method to ExpeditionsPlayer class:
-
-/// <summary>
-/// Server-authoritative method to start an expedition. Should only be called via ExpeditionService.
-/// </summary>
-/// <param name="expeditionId">The expedition to start.</param>
-/// <param name="startGameTick">The game tick when the expedition was started.</param>
-internal void StartExpedition(string expeditionId, long startGameTick)
-{
-    if (string.IsNullOrWhiteSpace(expeditionId))
-    {
-        return;
-    }
-
-    ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
-    if (!registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
-    {
-        return;
-    }
-
-    // Get or create progress entry
-    ExpeditionProgress progress = GetOrCreateProgress(definition);
-    
-    // Mark as active and reset state
-    progress.IsActive = true;
-    progress.IsCompleted = false;
-    progress.RewardsClaimed = false;
-    progress.IsOrphaned = false;
-    progress.StartGameTick = startGameTick;
-    
-    // Initialize condition counters for all deliverables
-    progress.ConditionProgress.Clear();
-    foreach (DeliverableDefinition deliverable in definition.Deliverables)
-    {
-        progress.ConditionProgress[deliverable.Id] = 0;
-    }
-}
+        // SERVER-ONLY: starts an expedition safely
+        internal void StartExpedition(string expeditionId, long startGameTick)
+        {
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+                return;
+        
+            if (string.IsNullOrWhiteSpace(expeditionId))
+                return;
+        
+            var registry = ModContent.GetInstance<ExpeditionRegistry>();
+            if (!registry.TryGetExpedition(expeditionId, out var definition))
+                return;
+        
+            ExpeditionProgress progress = GetOrCreateProgress(definition);
+        
+            progress.IsOrphaned = false;
+            progress.IsActive = true;
+            progress.IsCompleted = false;
+            progress.RewardsClaimed = false;
+            progress.StartGameTick = startGameTick;
+        
+            progress.ConditionProgress.Clear();
+            foreach (var deliverable in definition.Deliverables)
+                progress.ConditionProgress[deliverable.Id] = 0;
+        }
     }
 }
