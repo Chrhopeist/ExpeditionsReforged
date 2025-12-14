@@ -13,6 +13,7 @@ Authoritative Sources:
 
 Rules:
 - Do NOT invent or guess APIs.
+- Rely on https://docs.tmodloader.net/docs/stable/annotated.html website for valid API documentation. Root actions in the logic described on the website.
 - Do NOT use deprecated or legacy tModLoader patterns.
 - Prefer modern architecture:
   - ModSystem for world/UI coordination
