@@ -376,7 +376,7 @@ public class ExpeditionUI : UIState
 
         if (!string.Equals(_selectedCategory, "All", StringComparison.OrdinalIgnoreCase))
         {
-            definitions = definitions.Where(definition => string.Equals(definition.Category, _selectedCategory, StringComparison.OrdinalIgnoreCase));
+            definitions = definitions.Where(definition => string.Equals(definition.CategoryName, _selectedCategory, StringComparison.OrdinalIgnoreCase));
         }
 
         if (_filterRepeatableOnly)
@@ -447,7 +447,7 @@ public class ExpeditionUI : UIState
 
         var registry = ModContent.GetInstance<ExpeditionRegistry>();
 
-        if (registry.TryGetDefinition(_selectedExpeditionId, out ExpeditionDefinition definition))
+        if (registry.TryGetExpedition(_selectedExpeditionId, out ExpeditionDefinition definition))
         {
             ShowDetails(definition);
         }
@@ -501,7 +501,7 @@ public class ExpeditionUI : UIState
         ExpeditionProgress? progress = player?.ExpeditionProgressEntries.FirstOrDefault(progressEntry => progressEntry.ExpeditionId == definition.Id);
 
         _detailsList.Add(new UIText(definition.DisplayName, 0.95f, true));
-        _detailsList.Add(new UIText($"Category: {definition.Category}", 0.85f));
+        _detailsList.Add(new UIText($"Category: {definition.CategoryName}", 0.85f));
         _detailsList.Add(new UIText($"Duration: {FormatDuration(definition.DurationTicks)}", 0.85f));
         _detailsList.Add(new UIText($"Difficulty: {definition.Difficulty}", 0.85f));
         _detailsList.Add(new UIText($"Minimum Level: {definition.MinPlayerLevel}", 0.85f));
@@ -666,7 +666,7 @@ public class ExpeditionUI : UIState
         _categories.Add("All");
 
         var registry = ModContent.GetInstance<ExpeditionRegistry>();
-        foreach (var category in registry.Definitions.Select(definition => definition.Category).Where(category => !string.IsNullOrWhiteSpace(category)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(category => category, StringComparer.OrdinalIgnoreCase))
+        foreach (var category in registry.Definitions.Select(definition => definition.CategoryName).Where(category => !string.IsNullOrWhiteSpace(category)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(category => category, StringComparer.OrdinalIgnoreCase))
         {
             _categories.Add(category);
         }
@@ -851,7 +851,7 @@ public class ExpeditionUI : UIState
 
         bool isTracked = player != null && string.Equals(player.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
 
-        return new ExpeditionView(definition.Id, definition.DisplayName, definition.Category, status, isAvailable, isCompleted, isActive, definition.Rarity, definition.DurationTicks, definition.Difficulty, definition.NpcHeadId, definition.IsRepeatable, progressFraction, isTracked);
+        return new ExpeditionView(definition.Id, definition.DisplayName, definition.CategoryName, status, isAvailable, isCompleted, isActive, definition.Rarity, definition.DurationTicks, definition.Difficulty, definition.NpcHeadId, definition.IsRepeatable, progressFraction, isTracked);
     }
 
     private UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)

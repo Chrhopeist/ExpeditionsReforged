@@ -29,28 +29,12 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <summary>
         /// Localization key for the descriptive flavor text of the expedition.
         /// </summary>
-        public string DescriptionKey { get; }
+        public ExpeditionCategory Category { get; }
 
         /// <summary>
-        /// Localization key for the category or biome grouping that the expedition belongs to.
+        /// Player-facing category name derived from <see cref="Category"/>.
         /// </summary>
-        public string CategoryKey { get; }
-
-        /// <summary>
-        /// Localized name resolved from <see cref="DisplayNameKey"/>. UI panels should bind to this property so the
-        /// presentation layer always reflects the active language without extra lookup logic.
-        /// </summary>
-        public string DisplayName => Language.GetTextValue(DisplayNameKey);
-
-        /// <summary>
-        /// Localized description resolved from <see cref="DescriptionKey"/>.
-        /// </summary>
-        public string Description => Language.GetTextValue(DescriptionKey);
-
-        /// <summary>
-        /// Localized category name resolved from <see cref="CategoryKey"/>.
-        /// </summary>
-        public string Category => Language.GetTextValue(CategoryKey);
+        public string CategoryName => Category.ToString();
 
         /// <summary>
         /// Rarity tier of the expedition used by selection and UI coloring.
@@ -132,9 +116,8 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <param name="dailyRewards">Additional rewards when selected as daily content.</param>
         public ExpeditionDefinition(
             string id,
-            string displayNameKey,
-            string descriptionKey,
-            string categoryKey,
+            string displayName,
+            ExpeditionCategory category,
             int rarity,
             int durationTicks,
             int difficulty,
@@ -148,9 +131,8 @@ namespace ExpeditionsReforged.Content.Expeditions
             IEnumerable<RewardDefinition>? dailyRewards = null)
         {
             Id = id ?? throw new ArgumentNullException(nameof(id));
-            DisplayNameKey = displayNameKey ?? throw new ArgumentNullException(nameof(displayNameKey));
-            DescriptionKey = descriptionKey ?? throw new ArgumentNullException(nameof(descriptionKey));
-            CategoryKey = categoryKey ?? string.Empty;
+            DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+            Category = category;
             Rarity = rarity;
             DurationTicks = durationTicks;
             Difficulty = difficulty;
