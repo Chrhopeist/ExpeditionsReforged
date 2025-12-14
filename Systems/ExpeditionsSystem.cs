@@ -22,6 +22,8 @@ namespace ExpeditionsReforged.Systems
             if (Main.dedServ)
                 return;
 
+            // UI states are registered during mod load, but player data is not available until a world
+            // is active. ExpeditionUI defers any player-dependent population until a player exists.
             _expeditionInterface = new UserInterface();
             _trackerInterface = new UserInterface();
 
