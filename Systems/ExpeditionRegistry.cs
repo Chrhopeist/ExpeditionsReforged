@@ -148,6 +148,43 @@ namespace ExpeditionsReforged.Systems
                 dailyRewards: Array.Empty<RewardDefinition>()
             ));
 
+            definitions.Add(new ExpeditionDefinition(
+                id: "expeditions:slime_cleanup",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.SlimeCleanup.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.SlimeCleanup.Description",
+                category: ExpeditionCategory.Forest,
+                rarity: 1,
+                durationTicks: 60 * 60 * 4, // 4 in-game hours
+                difficulty: 1,
+                minPlayerLevel: 1,
+                isRepeatable: true,
+                isDailyEligible: true,
+                npcHeadId: NPCID.BlueSlime,
+            
+                prerequisites: Array.Empty<ConditionDefinition>(),
+            
+                deliverables: new[]
+                {
+                    new DeliverableDefinition(
+                        id: NpcCondition(NPCID.BlueSlime),
+                        requiredCount: 5,
+                        consumesItems: false,
+                        description: "Slay Blue Slimes")
+                },
+            
+                rewards: new[]
+                {
+                    new RewardDefinition(
+                        id: RewardItem(ItemID.Gel),
+                        minStack: 10,
+                        maxStack: 20,
+                        dropChance: 1f)
+                },
+            
+                dailyRewards: Array.Empty<RewardDefinition>()
+            ));
+
+
             // Optional: keep other definitions registered, but make them consistent so they don't
             // silently fail tracking if a tester starts them.
             definitions.Add(new ExpeditionDefinition(
