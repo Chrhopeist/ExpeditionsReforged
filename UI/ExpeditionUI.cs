@@ -576,8 +576,6 @@ var buttonRow = new UIElement
     Height = StyleDimension.FromPixels(36f)
 };
 
-ExpeditionProgress? progress = null;
-activePlayer?.TryGetExpeditionProgress(definition.Id, out progress);
 
 bool canStart = progress == null || (!progress.IsCompleted || definition.IsRepeatable);
 bool canClaim = progress != null && progress.IsCompleted && !progress.RewardsClaimed;
@@ -626,7 +624,7 @@ trackButton.Left.Set(280f, 0f);
 buttonRow.Append(trackButton);
 
 _detailsList.Add(buttonRow);
-
+}
 
 private static string FormatDuration(int durationTicks)
 {
