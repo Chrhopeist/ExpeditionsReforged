@@ -61,9 +61,12 @@ public class ExpeditionUI : UIState
     private SortMode _sortMode = SortMode.Name;
     private bool _sortAscending = true;
     private bool _needsPopulate = true;
+    private bool _wasPlayerOpen;
 
     public override void OnInitialize()
     {
+        // UIState instances are constructed during mod loading when no players exist; keep any
+        // LocalPlayer/ModPlayer access out of OnInitialize and wire only visual structure here.
         _rootPanel = new UIPanel
         {
             BackgroundColor = new Color(34, 40, 52),
@@ -307,15 +310,35 @@ public class ExpeditionUI : UIState
     {
         base.Update(gameTime);
 
-        if (_needsPopulate)
+        // UIState.Update can run even while the player is not ready; only rebuild when a world is
+        // active and the expedition window is actually open to avoid race conditions during load.
+        if (Main.gameMenu)
         {
-            TryPopulateExpeditionList();
+            _wasPlayerOpen = false;
+            return;
         }
-    }
 
-    private void TryPopulateExpeditionList()
-    {
-        if (PopulateExpeditionList())
+        if (!TryGetActivePlayer(out ExpeditionsPlayer? player))
+        {
+            _wasPlayerOpen = false;
+            return;
+        }
+
+        bool isOpen = player.ExpeditionUIOpen;
+        if (isOpen && !_wasPlayerOpen)
+        {
+            // Refresh the list when the UI is opened so we only populate after the player exists.
+            _needsPopulate = true;
+        }
+
+        _wasPlayerOpen = isOpen;
+
+        if (!_needsPopulate || !isOpen)
+        {
+            return;
+        }
+
+        if (PopulateExpeditionList(player))
         {
             _needsPopulate = false;
         }
@@ -323,23 +346,27 @@ public class ExpeditionUI : UIState
 
     private void RequestExpeditionListRefresh()
     {
+        // Mark the list dirty; Update will rebuild once a player is available and the UI is open to
+        // avoid redundant work while filters are toggled rapidly.
         _needsPopulate = true;
-        TryPopulateExpeditionList();
     }
 
-    private bool PopulateExpeditionList()
+    private bool TryGetActivePlayer(out ExpeditionsPlayer? player)
     {
-        // Player data is unavailable while in the main menu or during mod loading, so defer
-        // any ModPlayer access until a world and LocalPlayer have been created.
-        if (Main.gameMenu)
+        // Safely gate LocalPlayer/ModPlayer access; Update can run during load before a player exists.
+        player = null;
+        if (Main.gameMenu || Main.LocalPlayer == null)
         {
             return false;
         }
 
-        if (Main.LocalPlayer == null)
-        {
-            return false;
-        }
+        player = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
+        return player != null;
+    }
+
+    private bool PopulateExpeditionList(ExpeditionsPlayer player)
+    {
+        // At this point the UI is open and a LocalPlayer exists; keep population client-only and read-only.
 
         _expeditionList.Clear();
         _entries.Clear();
@@ -351,8 +378,6 @@ public class ExpeditionUI : UIState
         {
             definitions = definitions.Where(definition => string.Equals(definition.Category, _selectedCategory, StringComparison.OrdinalIgnoreCase));
         }
-
-        var player = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
 
         if (_filterRepeatableOnly)
         {
@@ -472,8 +497,8 @@ public class ExpeditionUI : UIState
 
         _detailsList.Clear();
 
-        var player = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
-        var progress = player?.ExpeditionProgressEntries.FirstOrDefault(progressEntry => progressEntry.ExpeditionId == definition.Id);
+        var player = TryGetActivePlayer(out ExpeditionsPlayer? activePlayer) ? activePlayer : null;
+        ExpeditionProgress? progress = player?.ExpeditionProgressEntries.FirstOrDefault(progressEntry => progressEntry.ExpeditionId == definition.Id);
 
         _detailsList.Add(new UIText(definition.DisplayName, 0.95f, true));
         _detailsList.Add(new UIText($"Category: {definition.Category}", 0.85f));
@@ -549,6 +574,8 @@ public class ExpeditionUI : UIState
             Height = StyleDimension.FromPixels(36f)
         };
 
+        // Gameplay wiring stays in ModPlayer so the UI remains client-only; these callbacks will be
+        // the junction point for future multiplayer-safe expedition start/turn-in logic.
         bool canStart = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
         bool canTurnIn = progress is { IsCompleted: true } && !progress.RewardsClaimed;
         bool canTrack = player != null;
