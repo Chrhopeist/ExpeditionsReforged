@@ -179,7 +179,7 @@ namespace ExpeditionsReforged.Systems
             _definitions = new ReadOnlyDictionary<string, ExpeditionDefinition>(validated);
             _definitionCollection = Array.AsReadOnly(validated.Values.ToArray());
 
-            Logger.Info($"Registered {_definitionCollection.Count} expeditions.");
+            Mod.Logger.Info($"Registered {_definitionCollection.Count} expeditions.");
         }
 
         private bool TryValidateDefinition(ExpeditionDefinition definition, IDictionary<string, ExpeditionDefinition> existing, out ExpeditionDefinition validated)
@@ -188,7 +188,7 @@ namespace ExpeditionsReforged.Systems
 
             if (definition is null)
             {
-                Logger.Warn("Skipping null expedition definition.");
+                Mod.Logger.Warn("Skipping null expedition definition.");
                 return false;
             }
 
@@ -196,55 +196,55 @@ namespace ExpeditionsReforged.Systems
             {
                 if (string.IsNullOrWhiteSpace(definition.Id))
                 {
-                    Logger.Warn("Expedition definitions must supply a non-empty ID. Definition skipped.");
+                    Mod.Logger.Warn("Expedition definitions must supply a non-empty ID. Definition skipped.");
                     return false;
                 }
 
                 if (existing.ContainsKey(definition.Id))
                 {
-                    Logger.Warn($"Duplicate expedition id '{definition.Id}' detected during registration. The duplicate was ignored.");
+                    Mod.Logger.Warn($"Duplicate expedition id '{definition.Id}' detected during registration. The duplicate was ignored.");
                     return false;
                 }
 
                 if (string.IsNullOrWhiteSpace(definition.DisplayName))
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' has no display name and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' has no display name and was skipped.");
                     return false;
                 }
 
                 if (!Enum.IsDefined(typeof(ExpeditionCategory), definition.Category) || definition.Category == ExpeditionCategory.Unknown)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' uses an undefined category '{definition.Category}'. The definition was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' uses an undefined category '{definition.Category}'. The definition was skipped.");
                     return false;
                 }
 
                 if (definition.NpcHeadId >= 0 && (definition.NpcHeadId >= TextureAssets.NpcHead.Length))
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' references invalid NPC head id {definition.NpcHeadId}. The definition was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' references invalid NPC head id {definition.NpcHeadId}. The definition was skipped.");
                     return false;
                 }
 
                 if (definition.DurationTicks <= 0)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' has non-positive duration and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' has non-positive duration and was skipped.");
                     return false;
                 }
 
                 if (definition.Difficulty <= 0)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' has non-positive difficulty and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' has non-positive difficulty and was skipped.");
                     return false;
                 }
 
                 if (definition.MinPlayerLevel < 0)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' has a negative minimum player level and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' has a negative minimum player level and was skipped.");
                     return false;
                 }
 
                 if (definition.Rarity < 0)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' has a negative rarity and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' has a negative rarity and was skipped.");
                     return false;
                 }
 
@@ -258,7 +258,7 @@ namespace ExpeditionsReforged.Systems
             }
             catch (Exception ex)
             {
-                Logger.Warn($"Failed to register expedition '{definition?.Id ?? "<unknown>"}': {ex.Message}");
+                Mod.Logger.Warn($"Failed to register expedition '{definition?.Id ?? "<unknown>"}': {ex.Message}");
                 return false;
             }
         }
@@ -269,7 +269,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (prerequisite is null)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' contains a null prerequisite and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null prerequisite and was skipped.");
                     return false;
                 }
             }
@@ -278,7 +278,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (deliverable is null)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' contains a null deliverable and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null deliverable and was skipped.");
                     return false;
                 }
             }
@@ -287,7 +287,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (reward is null)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' contains a null reward and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null reward and was skipped.");
                     return false;
                 }
             }
@@ -296,7 +296,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (reward is null)
                 {
-                    Logger.Warn($"Expedition '{definition.Id}' contains a null daily reward and was skipped.");
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null daily reward and was skipped.");
                     return false;
                 }
             }
