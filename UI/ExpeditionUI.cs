@@ -60,6 +60,7 @@ public class ExpeditionUI : UIState
     private int? _filterNpcHeadId;
     private SortMode _sortMode = SortMode.Name;
     private bool _sortAscending = true;
+    private bool _needsPopulate = true;
 
     public override void OnInitialize()
     {
@@ -78,6 +79,9 @@ public class ExpeditionUI : UIState
         Append(_rootPanel);
 
         BuildLayout();
+
+        // Defer population until a player exists; OnInitialize runs during mod load when no LocalPlayer is present.
+        _needsPopulate = true;
     }
 
     public override void ScrollWheel(UIScrollWheelEvent evt)
@@ -140,7 +144,6 @@ public class ExpeditionUI : UIState
 
         PopulateCategories();
         PopulateNpcHeads();
-        PopulateExpeditionList();
 
         listContainer.Append(_expeditionList);
         listContainer.Append(_expeditionScrollbar);
@@ -294,8 +297,50 @@ public class ExpeditionUI : UIState
         controlsBar.Append(_sortDirectionButton);
     }
 
-    private void PopulateExpeditionList()
+    public override void OnActivate()
     {
+        base.OnActivate();
+        _needsPopulate = true;
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+        base.Update(gameTime);
+
+        if (_needsPopulate)
+        {
+            TryPopulateExpeditionList();
+        }
+    }
+
+    private void TryPopulateExpeditionList()
+    {
+        if (PopulateExpeditionList())
+        {
+            _needsPopulate = false;
+        }
+    }
+
+    private void RequestExpeditionListRefresh()
+    {
+        _needsPopulate = true;
+        TryPopulateExpeditionList();
+    }
+
+    private bool PopulateExpeditionList()
+    {
+        // Player data is unavailable while in the main menu or during mod loading, so defer
+        // any ModPlayer access until a world and LocalPlayer have been created.
+        if (Main.gameMenu)
+        {
+            return false;
+        }
+
+        if (Main.LocalPlayer == null)
+        {
+            return false;
+        }
+
         _expeditionList.Clear();
         _entries.Clear();
 
@@ -350,6 +395,7 @@ public class ExpeditionUI : UIState
         }
 
         _rarityMarkers.SetEntries(_entries.Select(entry => (entry.View, entry.Height.Pixels + _expeditionList.ListPadding)).ToList());
+        return true;
     }
 
     private void BuildDetailsPanel()
@@ -528,7 +574,7 @@ public class ExpeditionUI : UIState
         var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
         {
             player?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
-            PopulateExpeditionList();
+            RequestExpeditionListRefresh();
         });
         trackButton.Left.Set(280f, 0f);
         buttonRow.Append(trackButton);
@@ -650,7 +696,7 @@ public class ExpeditionUI : UIState
         int nextIndex = (currentIndex + 1) % _categories.Count;
         _selectedCategory = _categories[nextIndex];
         _categoryButton.SetText(_selectedCategory);
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private void CycleCompletionFilter()
@@ -664,21 +710,21 @@ public class ExpeditionUI : UIState
         };
 
         _completionButton.SetText(_completionFilter.ToString());
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private void ToggleRepeatable()
     {
         _filterRepeatableOnly = !_filterRepeatableOnly;
         _repeatableButton.SetText(_filterRepeatableOnly ? "Repeatable: Yes" : "Repeatable: Any");
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private void ToggleTrackedFilter()
     {
         _filterTrackedOnly = !_filterTrackedOnly;
         _trackedFilterButton.SetText(_filterTrackedOnly ? "Tracked: Only" : "Tracked: Any");
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private void CycleNpcHead()
@@ -687,7 +733,7 @@ public class ExpeditionUI : UIState
         {
             _filterNpcHeadId = null;
             UpdateNpcHeadTexture();
-            PopulateExpeditionList();
+            RequestExpeditionListRefresh();
             return;
         }
 
@@ -703,7 +749,7 @@ public class ExpeditionUI : UIState
         }
 
         UpdateNpcHeadTexture();
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private void CycleSortMode()
@@ -719,14 +765,14 @@ public class ExpeditionUI : UIState
         };
 
         _sortButton.SetText(_sortMode.ToString());
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private void ToggleSortDirection()
     {
         _sortAscending = !_sortAscending;
         _sortDirectionButton.SetText(_sortAscending ? "Ascending" : "Descending");
-        PopulateExpeditionList();
+        RequestExpeditionListRefresh();
     }
 
     private IEnumerable<ExpeditionView> ApplySort(IEnumerable<ExpeditionDefinition> definitions, ExpeditionsPlayer? player)
