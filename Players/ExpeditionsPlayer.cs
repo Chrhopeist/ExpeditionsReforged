@@ -158,11 +158,6 @@ namespace ExpeditionsReforged.Players
             packet.Send(toWho, fromWho);
         }
 
-        public override void OnCraft(Item item, Recipe recipe)
-        {
-            ReportCraft(item);
-        }
-
         public void ReportItemPickup(Item item)
         {
             if (item is null)
@@ -173,6 +168,7 @@ namespace ExpeditionsReforged.Players
             ReportConditionProgress($"item:{item.type}", item.stack);
         }
 
+        // Craft tracking is handled elsewhere.
         public void ReportCraft(Item item)
         {
             if (item is null)
