@@ -2,6 +2,7 @@ using System.IO;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged
