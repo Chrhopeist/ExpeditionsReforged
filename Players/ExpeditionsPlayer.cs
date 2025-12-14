@@ -64,6 +64,20 @@ namespace ExpeditionsReforged.Players
             }
         }
 
+        public override void OnCraft(Item item, Recipe recipe)
+        {
+            // Crafting cannot be tracked via GlobalItem.OnCreate because that hook was removed in tModLoader 1.4.4
+            // and RecipeItemCreationContext no longer exposes the crafting player. ModPlayer hooks run on the
+            // authoritative player instance, which makes them the correct place to detect crafts.
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+            {
+                // Only the server/host should record crafting progress to avoid duplicate reports from clients.
+                return;
+            }
+
+            ReportCraft(item);
+        }
+
         public override void SaveData(TagCompound tag)
         {
             if (_expeditionProgressEntries.Count == 0)
@@ -174,7 +188,6 @@ namespace ExpeditionsReforged.Players
             ReportConditionProgress($"item:{item.type}", item.stack);
         }
 
-        // Craft tracking is handled elsewhere.
         public void ReportCraft(Item item)
         {
             if (item is null)
