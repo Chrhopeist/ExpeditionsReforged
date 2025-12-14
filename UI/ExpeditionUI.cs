@@ -572,12 +572,6 @@ _detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f));
 
 var buttonRow = new UIElement
 {
-Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(36f)
-};
-
-var buttonRow = new UIElement
-{
     Width = StyleDimension.FromPercent(1f),
     Height = StyleDimension.FromPixels(36f)
 };
@@ -616,41 +610,6 @@ buttonRow.Append(trackButton);
 
 _detailsList.Add(buttonRow);
 
-else
-{
-// Failure: show localized error message
-// For now, show the key directly since localization strings aren't defined yet
-string message = failReasonKey ?? "Failed to start expedition.";
-Main.NewText(message, 255, 100, 100);
-}
-});
-startButton.Left.Set(0f, 0f);
-buttonRow.Append(startButton);
-
-var turnInButton = CreateActionButton("Turn In", canTurnIn, () =>
-{
-if (player == null)
-return;
-
-if (player.TryCompleteExpedition(definition.Id))
-{
-player.TryClaimRewards(definition.Id);
-}
-});
-turnInButton.Left.Set(140f, 0f);
-buttonRow.Append(turnInButton);
-
-bool isTracked = string.Equals(player?.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
-var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
-{
-player?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
-RequestExpeditionListRefresh();
-});
-trackButton.Left.Set(280f, 0f);
-buttonRow.Append(trackButton);
-
-_detailsList.Add(buttonRow);
-}
 
 private static string FormatDuration(int durationTicks)
 {
