@@ -11,13 +11,22 @@ namespace ExpeditionsReforged
     {
         internal static ExpeditionsReforged Instance { get; private set; }
 
+        public static ModKeybind OpenExpeditionsKeybind { get; private set; }
+
         public override void Load()
         {
             Instance = this;
+
+            if (!Main.dedServ)
+            {
+                // Client-only keybind registration for toggling the Expeditions UI from Mod Controls.
+                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", string.Empty);
+            }
         }
 
         public override void Unload()
         {
+            OpenExpeditionsKeybind = null;
             Instance = null;
         }
 
