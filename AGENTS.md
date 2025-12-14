@@ -30,6 +30,7 @@ Rules:
   - Avoid static mutable state
   - Separate client-only UI from shared gameplay logic
   - Use proper networking where required
+- Always add comments to code to assist future coders
 
 Working Style:
 - If a change requires architectural decisions, explain the approach briefly before coding.
