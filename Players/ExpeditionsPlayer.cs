@@ -15,6 +15,7 @@ namespace ExpeditionsReforged.Players
     {
         public bool ExpeditionUIOpen;
         public bool TrackerUIOpen;
+        public string TrackedExpeditionId { get; private set; } = string.Empty;
 
         private readonly List<ExpeditionProgress> _expeditionProgressEntries = new();
         private readonly Dictionary<string, ExpeditionProgress> _progressByExpeditionId = new(StringComparer.OrdinalIgnoreCase);
@@ -26,6 +27,7 @@ namespace ExpeditionsReforged.Players
         {
             ExpeditionUIOpen = false;
             TrackerUIOpen = false;
+            TrackedExpeditionId = string.Empty;
 
             _lastDaytime = Main.dayTime;
             ReconcileDefinitions();
@@ -46,6 +48,7 @@ namespace ExpeditionsReforged.Players
         {
             ExpeditionUIOpen = false;
             TrackerUIOpen = false;
+            TrackedExpeditionId = string.Empty;
             _expeditionProgressEntries.Clear();
             _progressByExpeditionId.Clear();
             _lastDaytime = Main.dayTime;
@@ -65,9 +68,11 @@ namespace ExpeditionsReforged.Players
         {
             if (_expeditionProgressEntries.Count == 0)
             {
+                tag["TrackedExpeditionId"] = TrackedExpeditionId;
                 return;
             }
 
+            tag["TrackedExpeditionId"] = TrackedExpeditionId;
             tag["ExpeditionProgress"] = _expeditionProgressEntries
                 .Select(progress => new TagCompound
                 {
@@ -87,6 +92,7 @@ namespace ExpeditionsReforged.Players
         {
             _expeditionProgressEntries.Clear();
             _progressByExpeditionId.Clear();
+            TrackedExpeditionId = tag.GetString("TrackedExpeditionId") ?? string.Empty;
 
             if (!tag.TryGet("ExpeditionProgress", out List<TagCompound> savedProgressEntries))
             {
@@ -266,6 +272,31 @@ namespace ExpeditionsReforged.Players
             return true;
         }
 
+        public bool TryTrackExpedition(string expeditionId)
+        {
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+            {
+                TrackedExpeditionId = expeditionId ?? string.Empty;
+                ExpeditionsReforged.RequestTrack(expeditionId);
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(expeditionId))
+            {
+                TrackedExpeditionId = string.Empty;
+                return true;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            if (!registry.TryGetDefinition(expeditionId, out _))
+            {
+                return false;
+            }
+
+            TrackedExpeditionId = expeditionId;
+            return true;
+        }
+
         public bool TryClaimRewards(string expeditionId)
         {
             if (!TryGetExpeditionProgress(expeditionId, out ExpeditionProgress progress) || progress.IsOrphaned || !progress.IsCompleted || progress.RewardsClaimed)
@@ -318,6 +349,7 @@ namespace ExpeditionsReforged.Players
 
         public void ReceiveProgressSync(BinaryReader reader)
         {
+            TrackedExpeditionId = reader.ReadString();
             _expeditionProgressEntries.Clear();
             _progressByExpeditionId.Clear();
 
@@ -354,6 +386,7 @@ namespace ExpeditionsReforged.Players
 
         public void WriteProgressToPacket(ModPacket packet)
         {
+            packet.Write(TrackedExpeditionId ?? string.Empty);
             packet.Write((ushort)_expeditionProgressEntries.Count);
             foreach (ExpeditionProgress progress in _expeditionProgressEntries)
             {
@@ -458,6 +491,11 @@ namespace ExpeditionsReforged.Players
                         progress.ConditionProgress[deliverable.Id] = 0;
                     }
                 }
+            }
+
+            if (!string.IsNullOrWhiteSpace(TrackedExpeditionId) && !registry.TryGetDefinition(TrackedExpeditionId, out _))
+            {
+                TrackedExpeditionId = string.Empty;
             }
         }
     }
