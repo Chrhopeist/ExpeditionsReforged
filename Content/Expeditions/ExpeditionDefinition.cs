@@ -25,7 +25,12 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <summary>
         /// The category or biome grouping that the expedition belongs to.
         /// </summary>
-        public string Category { get; }
+        public ExpeditionCategory Category { get; }
+
+        /// <summary>
+        /// Player-facing category name derived from <see cref="Category"/>.
+        /// </summary>
+        public string CategoryName => Category.ToString();
 
         /// <summary>
         /// Rarity tier of the expedition used by selection and UI coloring.
@@ -107,7 +112,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         public ExpeditionDefinition(
             string id,
             string displayName,
-            string category,
+            ExpeditionCategory category,
             int rarity,
             int durationTicks,
             int difficulty,
@@ -122,7 +127,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         {
             Id = id ?? throw new ArgumentNullException(nameof(id));
             DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
-            Category = category ?? string.Empty;
+            Category = category;
             Rarity = rarity;
             DurationTicks = durationTicks;
             Difficulty = difficulty;

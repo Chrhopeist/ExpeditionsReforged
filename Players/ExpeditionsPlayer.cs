@@ -118,7 +118,7 @@ namespace ExpeditionsReforged.Players
                     IsOrphaned = entry.GetBool("isOrphan")
                 };
 
-                if (string.IsNullOrWhiteSpace(progress.StableProgressKey) && registry.TryGetDefinition(expeditionId, out ExpeditionDefinition definition))
+                if (string.IsNullOrWhiteSpace(progress.StableProgressKey) && registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
                 {
                     progress.StableProgressKey = definition.GetStableProgressKey(Player.whoAmI);
                 }
@@ -208,7 +208,7 @@ namespace ExpeditionsReforged.Players
             }
 
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
-            if (!registry.TryGetDefinition(expeditionId, out ExpeditionDefinition definition))
+            if (!registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
             {
                 return false;
             }
@@ -283,7 +283,7 @@ namespace ExpeditionsReforged.Players
             }
 
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
-            if (!registry.TryGetDefinition(expeditionId, out _))
+            if (!registry.TryGetExpedition(expeditionId, out _))
             {
                 return false;
             }
@@ -436,7 +436,7 @@ namespace ExpeditionsReforged.Players
 
             foreach (ExpeditionProgress progress in _expeditionProgressEntries.Where(p => p.IsActive && !p.IsOrphaned))
             {
-                if (!registry.TryGetDefinition(progress.ExpeditionId, out ExpeditionDefinition definition))
+                if (!registry.TryGetExpedition(progress.ExpeditionId, out ExpeditionDefinition definition))
                 {
                     progress.IsOrphaned = true;
                     continue;
@@ -473,7 +473,7 @@ namespace ExpeditionsReforged.Players
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
             foreach (ExpeditionProgress progress in _expeditionProgressEntries)
             {
-                progress.IsOrphaned = !registry.TryGetDefinition(progress.ExpeditionId, out ExpeditionDefinition definition);
+                progress.IsOrphaned = !registry.TryGetExpedition(progress.ExpeditionId, out ExpeditionDefinition definition);
                 if (progress.IsOrphaned)
                 {
                     continue;
@@ -488,7 +488,7 @@ namespace ExpeditionsReforged.Players
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(TrackedExpeditionId) && !registry.TryGetDefinition(TrackedExpeditionId, out _))
+            if (!string.IsNullOrWhiteSpace(TrackedExpeditionId) && !registry.TryGetExpedition(TrackedExpeditionId, out _))
             {
                 TrackedExpeditionId = string.Empty;
             }
