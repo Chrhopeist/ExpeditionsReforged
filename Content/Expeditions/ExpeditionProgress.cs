@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace ExpeditionsReforged.Content.Expeditions
 {
@@ -9,9 +10,14 @@ namespace ExpeditionsReforged.Content.Expeditions
     public sealed class ExpeditionProgress
     {
         /// <summary>
-        /// Gets or sets the unique identifier for the expedition.
+        /// Gets or sets the unique identifier for the expedition definition.
         /// </summary>
         public string ExpeditionId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the stable, per-player progress key used for persistence.
+        /// </summary>
+        public string StableProgressKey { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the game tick when the expedition was started.
@@ -21,23 +27,34 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <summary>
         /// Gets or sets a value indicating whether the expedition objectives are complete.
         /// </summary>
-        public bool IsCompleted { get; private set; }
+        public bool IsCompleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the expedition is currently active.
+        /// </summary>
+        public bool IsActive { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the rewards for this expedition have been claimed.
         /// </summary>
-        public bool RewardsClaimed { get; private set; }
+        public bool RewardsClaimed { get; set; }
 
         /// <summary>
-        /// Gets a value indicating whether the expedition is currently active (started but not completed).
+        /// Gets or sets a value indicating whether the definition backing this progress entry is missing.
         /// </summary>
-        public bool IsActive => !IsCompleted;
+        public bool IsOrphaned { get; set; }
+
+        /// <summary>
+        /// Per-condition progress counters keyed by condition identifier.
+        /// </summary>
+        public Dictionary<string, int> ConditionProgress { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Marks the expedition as completed.
         /// </summary>
         public void Complete()
         {
+            IsActive = false;
             IsCompleted = true;
         }
 
@@ -59,10 +76,13 @@ namespace ExpeditionsReforged.Content.Expeditions
 
             return new ExpeditionProgress
             {
-                ExpeditionId = definition.GetStableProgressKey(playerId),
+                ExpeditionId = definition.Id,
+                StableProgressKey = definition.GetStableProgressKey(playerId),
                 StartGameTick = 0,
                 RewardsClaimed = false,
                 IsCompleted = false,
+                IsActive = false,
+                IsOrphaned = false,
             };
         }
     }
