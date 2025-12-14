@@ -576,13 +576,6 @@ public class ExpeditionUI : UIState
             Height = StyleDimension.FromPixels(36f)
         };
 
-        // Gameplay wiring stays in ModPlayer so the UI remains client-only; these callbacks will be
-        // the junction point for future multiplayer-safe expedition start/turn-in logic.
-        bool canStart = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
-        bool canTurnIn = progress is { IsCompleted: true } && !progress.RewardsClaimed;
-        bool canTrack = player != null;
-
-        // Replace the existing startButton creation in ShowDetails method:
 
 bool canStart = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
 var startButton = CreateActionButton("Start", canStart, () =>
