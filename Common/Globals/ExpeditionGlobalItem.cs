@@ -1,6 +1,5 @@
 using ExpeditionsReforged.Players;
 using Terraria;
-using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -14,24 +13,16 @@ namespace ExpeditionsReforged.Common.Globals
             return base.OnPickup(item, player);
         }
 
-        public override void OnCreated(Item item, ItemCreationContext context)
-        {
-            // ModPlayer.OnCraft was removed in tModLoader 1.4.4, so crafting needs to be detected through
-            // the item creation pipeline instead. GlobalItem.OnCreated runs for crafted items and exposes
-            // the RecipeItemCreationContext we need on this version.
-            if (context is not RecipeItemCreationContext recipeContext)
-            {
-                return;
-            }
-
-            if (Main.netMode == NetmodeID.MultiplayerClient)
-            {
-                // Only the server/host should record crafting progress to avoid double-reporting in multiplayer.
-                return;
-            }
-
-            Player craftingPlayer = recipeContext.player;
-            craftingPlayer?.GetModPlayer<ExpeditionsPlayer>().ReportCraft(item);
-        }
+        /*
+         * NOTE:
+         * Craft detection is intentionally NOT handled here.
+         *
+         * In tModLoader 1.4.4:
+         * - GlobalItem does not expose a valid OnCreate/OnCreated hook
+         * - RecipeItemCreationContext does not provide a player reference
+         *
+         * Craft progress will be wired later using an authoritative,
+         * multiplayer-safe system (likely via expedition turn-ins or board actions).
+         */
     }
 }
