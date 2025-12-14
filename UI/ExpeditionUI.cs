@@ -586,9 +586,26 @@ bool isTracked = activePlayer != null &&
 
 var startButton = CreateActionButton("Start", canStart, () =>
 {
-    activePlayer?.TryStartExpedition(definition.Id);
-    RequestExpeditionListRefresh();
+    if (Main.netMode == NetmodeID.MultiplayerClient)
+    {
+        Main.NewText("Starting expeditions in multiplayer is not yet supported.", 255, 100, 100);
+        return;
+    }
+
+    if (activePlayer == null)
+        return;
+
+    if (ExpeditionService.TryStartExpedition(activePlayer.Player, definition.Id, out string? failReasonKey))
+    {
+        Main.NewText($"Started expedition: {definition.DisplayName}", 100, 255, 100);
+        RequestExpeditionListRefresh();
+    }
+    else
+    {
+        Main.NewText(failReasonKey ?? "Failed to start expedition.", 255, 100, 100);
+    }
 });
+
 startButton.Left.Set(0f, 0f);
 buttonRow.Append(startButton);
 
