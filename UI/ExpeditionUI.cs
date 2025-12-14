@@ -501,6 +501,7 @@ public class ExpeditionUI : UIState
         ExpeditionProgress? progress = player?.ExpeditionProgressEntries.FirstOrDefault(progressEntry => progressEntry.ExpeditionId == definition.Id);
 
         _detailsList.Add(new UIText(definition.DisplayName, 0.95f, true));
+        _detailsList.Add(new UIText(definition.Description, 0.85f));
         _detailsList.Add(new UIText($"Category: {definition.CategoryName}", 0.85f));
         _detailsList.Add(new UIText($"Duration: {FormatDuration(definition.DurationTicks)}", 0.85f));
         _detailsList.Add(new UIText($"Difficulty: {definition.Difficulty}", 0.85f));

@@ -143,6 +143,7 @@ public class TrackerUI : UIState
 
         _contentList.Add(new UIText("Tracked Expedition", 0.95f * _scale, true));
         _contentList.Add(new UIText(definition.DisplayName, 0.9f * _scale, true));
+        _contentList.Add(new UIText(definition.Description, 0.85f * _scale));
         _contentList.Add(new UIText($"Category: {definition.CategoryName}", 0.85f * _scale));
         _contentList.Add(new UIText($"Duration: {FormatDuration(definition.DurationTicks)}", 0.85f * _scale));
 
