@@ -20,7 +20,7 @@ namespace ExpeditionsReforged
             if (!Main.dedServ)
             {
                 // Client-only keybind registration for toggling the Expeditions UI from Mod Controls.
-                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", string.Empty);
+                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", "");
             }
         }
 
