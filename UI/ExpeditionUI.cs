@@ -602,37 +602,41 @@ var startButton = CreateActionButton("Start", canStart, () =>
         RequestExpeditionListRefresh();
     }
     else
+}
+        else
+        {
+            // Failure: show localized error message
+            // For now, show the key directly since localization strings aren't defined yet
+            string message = failReasonKey ?? "Failed to start expedition.";
+            Main.NewText(message, 255, 100, 100);
+        }
+    });
+    startButton.Left.Set(0f, 0f);
+    buttonRow.Append(startButton);
+
+    bool canTurnIn = progress is { IsCompleted: true } && !progress.RewardsClaimed;
+    var turnInButton = CreateActionButton("Turn In", canTurnIn, () =>
     {
-        // Failure: show localized error message
-        // For now, show the key directly since localization strings aren't defined yet
-        string message = failReasonKey ?? "Failed to start expedition.";
-        Main.NewText(message, 255, 100, 100);
-    }
-});
-startButton.Left.Set(0f, 0f);
-buttonRow.Append(startButton);
+        if (player == null)
+            return;
 
-        var turnInButton = CreateActionButton("Turn In", canTurnIn, () =>
+        if (player.TryCompleteExpedition(definition.Id))
         {
-            if (player == null)
-                return;
+            player.TryClaimRewards(definition.Id);
+        }
+    });
+    turnInButton.Left.Set(140f, 0f);
+    buttonRow.Append(turnInButton);
 
-            if (player.TryCompleteExpedition(definition.Id))
-            {
-                player.TryClaimRewards(definition.Id);
-            }
-        });
-        turnInButton.Left.Set(140f, 0f);
-        buttonRow.Append(turnInButton);
-
-        bool isTracked = string.Equals(player?.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
-        var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
-        {
-            player?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
-            RequestExpeditionListRefresh();
-        });
-        trackButton.Left.Set(280f, 0f);
-        buttonRow.Append(trackButton);
+    bool isTracked = string.Equals(player?.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
+    bool canTrack = player != null;
+    var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
+    {
+        player?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
+        RequestExpeditionListRefresh();
+    });
+    trackButton.Left.Set(280f, 0f);
+    buttonRow.Append(trackButton);
 
         _detailsList.Add(buttonRow);
     }
