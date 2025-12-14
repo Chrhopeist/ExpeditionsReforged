@@ -166,7 +166,8 @@ namespace ExpeditionsReforged.Players
                     IsOrphaned = isOrphaned
                 };
 
-                if (string.IsNullOrWhiteSpace(progress.StableProgressKey) && registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
+                bool hasDefinition = registry.TryGetDefinition(expeditionId, out var definition);
+                if (string.IsNullOrWhiteSpace(progress.StableProgressKey) && hasDefinition)
                 {
                     progress.StableProgressKey = definition.GetStableProgressKey(Player.whoAmI);
                 }
@@ -195,7 +196,7 @@ namespace ExpeditionsReforged.Players
                     }
                 }
 
-                if (registry.TryGetDefinition(expeditionId, out ExpeditionDefinition definition))
+                if (hasDefinition)
                 {
                     progress.IsOrphaned = false;
                     if (string.IsNullOrWhiteSpace(progress.StableProgressKey))
