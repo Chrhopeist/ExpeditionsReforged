@@ -10,6 +10,7 @@ using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
+using Terraria.ID;
 
 namespace ExpeditionsReforged.UI;
 
@@ -581,9 +582,42 @@ public class ExpeditionUI : UIState
         bool canTurnIn = progress is { IsCompleted: true } && !progress.RewardsClaimed;
         bool canTrack = player != null;
 
-        var startButton = CreateActionButton("Start", canStart, () => player?.TryStartExpedition(definition.Id));
-        startButton.Left.Set(0f, 0f);
-        buttonRow.Append(startButton);
+        // Replace the existing startButton creation in ShowDetails method:
+
+bool canStart = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
+var startButton = CreateActionButton("Start", canStart, () =>
+{
+    // TODO: In multiplayer, this will become a packet request to the server.
+    // For now, this only works in singleplayer and when hosting.
+    if (Main.netMode == NetmodeID.MultiplayerClient)
+    {
+        // Client cannot start expeditions directly - show friendly message
+        Main.NewText("Starting expeditions in multiplayer is not yet supported.", 255, 100, 100);
+        return;
+    }
+
+    if (player == null)
+    {
+        return;
+    }
+
+    // Use the authoritative service to start the expedition
+    if (ExpeditionService.TryStartExpedition(player.Player, definition.Id, out string? failReasonKey))
+    {
+        // Success: refresh UI to reflect the new active state
+        Main.NewText($"Started expedition: {definition.DisplayName}", 100, 255, 100);
+        RequestExpeditionListRefresh();
+    }
+    else
+    {
+        // Failure: show localized error message
+        // For now, show the key directly since localization strings aren't defined yet
+        string message = failReasonKey ?? "Failed to start expedition.";
+        Main.NewText(message, 255, 100, 100);
+    }
+});
+startButton.Left.Set(0f, 0f);
+buttonRow.Append(startButton);
 
         var turnInButton = CreateActionButton("Turn In", canTurnIn, () =>
         {
