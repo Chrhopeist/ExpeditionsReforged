@@ -374,6 +374,18 @@ namespace ExpeditionsReforged.Players
                 return false;
             }
 
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            if (!registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
+            {
+                return false;
+            }
+
+            if (!ExpeditionRewardService.TryPayCompletionRewards(Player, definition))
+            {
+                Mod.Logger.Warn($"Failed to pay rewards for expedition '{expeditionId}' on player {Player.name}. Claim aborted.");
+                return false;
+            }
+
             progress.ClaimRewards();
             return true;
         }
