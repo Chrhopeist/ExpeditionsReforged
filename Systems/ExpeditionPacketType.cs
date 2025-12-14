@@ -6,6 +6,7 @@ namespace ExpeditionsReforged.Systems
         StartExpedition,
         ConditionProgress,
         CompleteExpedition,
-        ClaimRewards
+        ClaimRewards,
+        TrackExpedition
     }
 }
