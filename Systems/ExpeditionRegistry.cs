@@ -121,10 +121,13 @@ namespace ExpeditionsReforged.Systems
 
         private static void RegisterInternalExpeditions(Dictionary<string, ExpeditionDefinition> definitions)
         {
+            // Expedition names, descriptions, and categories are provided as localization keys so the registry remains
+            // language-neutral and UI layers can resolve player-facing strings via Language.GetTextValue at render time.
             RegisterExpedition(definitions, new ExpeditionDefinition(
                 id: "expeditions:forest_scout",
-                displayName: "Forest Scout",
-                category: "Forest",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.ForestScout.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.ForestScout.Description",
+                categoryKey: "Mods.ExpeditionsReforged.ExpeditionCategories.Forest",
                 rarity: 1,
                 durationTicks: 60 * 60 * 8,
                 difficulty: 1,
@@ -139,8 +142,9 @@ namespace ExpeditionsReforged.Systems
 
             RegisterExpedition(definitions, new ExpeditionDefinition(
                 id: "expeditions:desert_run",
-                displayName: "Desert Run",
-                category: "Desert",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.DesertRun.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.DesertRun.Description",
+                categoryKey: "Mods.ExpeditionsReforged.ExpeditionCategories.Desert",
                 rarity: 2,
                 durationTicks: 60 * 60 * 12,
                 difficulty: 2,
@@ -155,8 +159,9 @@ namespace ExpeditionsReforged.Systems
 
             RegisterExpedition(definitions, new ExpeditionDefinition(
                 id: "expeditions:dungeon_probe",
-                displayName: "Dungeon Probe",
-                category: "Dungeon",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.DungeonProbe.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.DungeonProbe.Description",
+                categoryKey: "Mods.ExpeditionsReforged.ExpeditionCategories.Dungeon",
                 rarity: 3,
                 durationTicks: 60 * 60 * 24,
                 difficulty: 4,
@@ -179,8 +184,14 @@ namespace ExpeditionsReforged.Systems
             if (string.IsNullOrWhiteSpace(definition.Id))
                 throw new ArgumentException("Expedition definitions must supply a non-empty ID.", nameof(definition));
 
-            if (string.IsNullOrWhiteSpace(definition.DisplayName))
-                throw new ArgumentException("Expedition definitions must supply a display name.", nameof(definition));
+            if (string.IsNullOrWhiteSpace(definition.DisplayNameKey))
+                throw new ArgumentException("Expedition definitions must supply a display name localization key.", nameof(definition));
+
+            if (string.IsNullOrWhiteSpace(definition.DescriptionKey))
+                throw new ArgumentException("Expedition definitions must supply a description localization key.", nameof(definition));
+
+            if (string.IsNullOrWhiteSpace(definition.CategoryKey))
+                throw new ArgumentException("Expedition definitions must supply a category localization key.", nameof(definition));
 
             if (definition.DurationTicks <= 0)
                 throw new ArgumentOutOfRangeException(nameof(definition), "Expedition duration must be greater than zero.");

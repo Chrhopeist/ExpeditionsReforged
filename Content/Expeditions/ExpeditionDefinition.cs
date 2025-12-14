@@ -4,11 +4,15 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Terraria.Localization;
 
 namespace ExpeditionsReforged.Content.Expeditions
 {
     /// <summary>
     /// Represents a serializable definition for an expedition, including its identity and gameplay parameters.
+    /// Localization strategy: store stable localization keys on the definition and resolve them via <see cref="Language"/>
+    /// when requested. This keeps hashes and save data language-agnostic while letting UI surfaces call the localized
+    /// properties without additional plumbing.
     /// </summary>
     public class ExpeditionDefinition
     {
@@ -18,14 +22,35 @@ namespace ExpeditionsReforged.Content.Expeditions
         public string Id { get; }
 
         /// <summary>
-        /// Player-facing name displayed in UI elements and logs.
+        /// Localization key for the player-facing name displayed in UI elements and logs.
         /// </summary>
-        public string DisplayName { get; }
+        public string DisplayNameKey { get; }
 
         /// <summary>
-        /// The category or biome grouping that the expedition belongs to.
+        /// Localization key for the descriptive flavor text of the expedition.
         /// </summary>
-        public string Category { get; }
+        public string DescriptionKey { get; }
+
+        /// <summary>
+        /// Localization key for the category or biome grouping that the expedition belongs to.
+        /// </summary>
+        public string CategoryKey { get; }
+
+        /// <summary>
+        /// Localized name resolved from <see cref="DisplayNameKey"/>. UI panels should bind to this property so the
+        /// presentation layer always reflects the active language without extra lookup logic.
+        /// </summary>
+        public string DisplayName => Language.GetTextValue(DisplayNameKey);
+
+        /// <summary>
+        /// Localized description resolved from <see cref="DescriptionKey"/>.
+        /// </summary>
+        public string Description => Language.GetTextValue(DescriptionKey);
+
+        /// <summary>
+        /// Localized category name resolved from <see cref="CategoryKey"/>.
+        /// </summary>
+        public string Category => Language.GetTextValue(CategoryKey);
 
         /// <summary>
         /// Rarity tier of the expedition used by selection and UI coloring.
@@ -91,8 +116,9 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// Initializes a new instance of <see cref="ExpeditionDefinition"/> with the provided values.
         /// </summary>
         /// <param name="id">Unique identifier for the expedition.</param>
-        /// <param name="displayName">Player-facing name displayed in UI elements and logs.</param>
-        /// <param name="category">High-level grouping for UI filtering and progression.</param>
+        /// <param name="displayNameKey">Localization key for the player-facing expedition name.</param>
+        /// <param name="descriptionKey">Localization key for the expedition description.</param>
+        /// <param name="categoryKey">Localization key for the high-level grouping used by UI filtering and progression.</param>
         /// <param name="rarity">Rarity tier used by selection logic.</param>
         /// <param name="durationTicks">Duration of the expedition in game ticks.</param>
         /// <param name="difficulty">Numeric difficulty rating used for balancing and matchmaking.</param>
@@ -106,8 +132,9 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <param name="dailyRewards">Additional rewards when selected as daily content.</param>
         public ExpeditionDefinition(
             string id,
-            string displayName,
-            string category,
+            string displayNameKey,
+            string descriptionKey,
+            string categoryKey,
             int rarity,
             int durationTicks,
             int difficulty,
@@ -121,8 +148,9 @@ namespace ExpeditionsReforged.Content.Expeditions
             IEnumerable<RewardDefinition>? dailyRewards = null)
         {
             Id = id ?? throw new ArgumentNullException(nameof(id));
-            DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
-            Category = category ?? string.Empty;
+            DisplayNameKey = displayNameKey ?? throw new ArgumentNullException(nameof(displayNameKey));
+            DescriptionKey = descriptionKey ?? throw new ArgumentNullException(nameof(descriptionKey));
+            CategoryKey = categoryKey ?? string.Empty;
             Rarity = rarity;
             DurationTicks = durationTicks;
             Difficulty = difficulty;
@@ -144,8 +172,9 @@ namespace ExpeditionsReforged.Content.Expeditions
         {
             return new ExpeditionDefinition(
                 id: Id,
-                displayName: DisplayName,
-                category: Category,
+                displayNameKey: DisplayNameKey,
+                descriptionKey: DescriptionKey,
+                categoryKey: CategoryKey,
                 rarity: Rarity,
                 durationTicks: DurationTicks,
                 difficulty: Difficulty,
@@ -174,7 +203,10 @@ namespace ExpeditionsReforged.Content.Expeditions
         {
             using var sha256 = SHA256.Create();
             var builder = new StringBuilder();
-            builder.Append(Id).Append('|').Append(DisplayName).Append('|').Append(Category)
+            builder.Append(Id)
+                .Append('|').Append(DisplayNameKey)
+                .Append('|').Append(DescriptionKey)
+                .Append('|').Append(CategoryKey)
                 .Append('|').Append(Rarity).Append('|').Append(DurationTicks).Append('|').Append(Difficulty)
                 .Append('|').Append(MinPlayerLevel).Append('|').Append(IsRepeatable).Append('|').Append(IsDailyEligible)
                 .Append('|').Append(NpcHeadId);

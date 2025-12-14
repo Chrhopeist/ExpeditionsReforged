@@ -1,0 +1,25 @@
+{
+  "Mods": {
+    "ExpeditionsReforged": {
+      "Expeditions": {
+        "ForestScout": {
+          "DisplayName": "Forest Scout",
+          "Description": "Survey the nearby forest, collect wood samples, and report on local threats."
+        },
+        "DesertRun": {
+          "DisplayName": "Desert Run",
+          "Description": "Traverse the dunes, gather cactus supplies, and confirm the desert is safe for travel."
+        },
+        "DungeonProbe": {
+          "DisplayName": "Dungeon Probe",
+          "Description": "Investigate the dungeon depths, recover bone fragments, and assess post-Skeletron risks."
+        }
+      },
+      "ExpeditionCategories": {
+        "Forest": "Forest",
+        "Desert": "Desert",
+        "Dungeon": "Dungeon"
+      }
+    }
+  }
+}
