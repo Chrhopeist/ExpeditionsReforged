@@ -1,5 +1,6 @@
 using ExpeditionsReforged.Players;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -7,20 +8,17 @@ namespace ExpeditionsReforged.Systems
 {
     public class ExpeditionCraftGlobalItem : GlobalItem
     {
-        public override void OnCraft(Item item, Recipe recipe)
+        public override void OnCreate(Item item, ItemCreationContext context)
         {
-            if (Main.netMode == NetmodeID.MultiplayerClient)
+            if (context is RecipeItemCreationContext recipeContext)
             {
-                return;
-            }
+                if (Main.netMode == NetmodeID.MultiplayerClient)
+                {
+                    return;
+                }
 
-            Player player = Main.LocalPlayer;
-            if (player is null || !player.active)
-            {
-                return;
+                recipeContext.player.GetModPlayer<ExpeditionsPlayer>().ReportCraft(item);
             }
-
-            player.GetModPlayer<ExpeditionsPlayer>().ReportCraft(item);
         }
     }
 }
