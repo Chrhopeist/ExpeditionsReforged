@@ -584,8 +584,8 @@ Height = StyleDimension.FromPixels(36f)
 
         // Replace the existing startButton creation in ShowDetails method:
 
-bool canStart = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
-var startButton = CreateActionButton("Start", canStart, () =>
+bool canStartExpedition = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
+var startButton = CreateActionButton("Start", canStartExpedition, () =>
 {
 // TODO: In multiplayer, this will become a packet request to the server.
 // For now, this only works in singleplayer and when hosting.
