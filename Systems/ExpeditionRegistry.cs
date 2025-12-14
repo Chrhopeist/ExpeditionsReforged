@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using ExpeditionsReforged.Content.Expeditions;
 using Terraria.GameContent;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Systems
@@ -14,19 +15,17 @@ namespace ExpeditionsReforged.Systems
     /// </summary>
     public class ExpeditionRegistry : ModSystem
     {
-        private IReadOnlyDictionary<string, ExpeditionDefinition> _definitions = new ReadOnlyDictionary<string, ExpeditionDefinition>(new Dictionary<string, ExpeditionDefinition>(StringComparer.Ordinal));
+        private IReadOnlyDictionary<string, ExpeditionDefinition> _definitions =
+            new ReadOnlyDictionary<string, ExpeditionDefinition>(new Dictionary<string, ExpeditionDefinition>(StringComparer.Ordinal));
+
         private IReadOnlyCollection<ExpeditionDefinition> _definitionCollection = Array.Empty<ExpeditionDefinition>();
 
-        /// <summary>
-        /// Read-only view of all registered expedition definitions.
-        /// </summary>
         public IReadOnlyCollection<ExpeditionDefinition> Definitions => _definitionCollection;
 
         public override void Load()
         {
             var definitions = new List<ExpeditionDefinition>();
             RegisterInternalExpeditions(definitions);
-
             FinalizeDefinitions(definitions);
         }
 
@@ -36,17 +35,8 @@ namespace ExpeditionsReforged.Systems
             _definitionCollection = Array.Empty<ExpeditionDefinition>();
         }
 
-        /// <summary>
-        /// Retrieves a read-only collection of all registered expedition definitions.
-        /// </summary>
         public IReadOnlyCollection<ExpeditionDefinition> GetAll() => _definitionCollection;
 
-        /// <summary>
-        /// Attempts to retrieve a registered expedition definition by its ID.
-        /// </summary>
-        /// <param name="expeditionId">Expedition identifier to look up.</param>
-        /// <param name="definition">Matching definition if found.</param>
-        /// <returns>True if the definition exists; otherwise false.</returns>
         public bool TryGetExpedition(string expeditionId, out ExpeditionDefinition definition)
         {
             if (string.IsNullOrWhiteSpace(expeditionId))
@@ -58,14 +48,8 @@ namespace ExpeditionsReforged.Systems
             return _definitions.TryGetValue(expeditionId, out definition);
         }
 
-        /// <summary>
-        /// Obsolete shim for existing callers. Prefer <see cref="TryGetExpedition"/>.
-        /// </summary>
         public bool TryGetDefinition(string expeditionId, out ExpeditionDefinition definition) => TryGetExpedition(expeditionId, out definition);
 
-        /// <summary>
-        /// Returns expeditions that belong to the given category.
-        /// </summary>
         public IEnumerable<ExpeditionDefinition> GetByCategory(ExpeditionCategory category)
         {
             if (!Enum.IsDefined(typeof(ExpeditionCategory), category) || category == ExpeditionCategory.Unknown)
@@ -74,14 +58,12 @@ namespace ExpeditionsReforged.Systems
             return _definitionCollection.Where(d => d.Category == category);
         }
 
-        /// <summary>
-        /// Returns expeditions that satisfy a predicate against player progress state.
-        /// </summary>
-        public IEnumerable<ExpeditionDefinition> FilterByProgress(IEnumerable<ExpeditionProgress> progressStates, Func<ExpeditionDefinition, ExpeditionProgress?, bool> predicate)
+        public IEnumerable<ExpeditionDefinition> FilterByProgress(
+            IEnumerable<ExpeditionProgress> progressStates,
+            Func<ExpeditionDefinition, ExpeditionProgress?, bool> predicate)
         {
             if (progressStates is null)
                 throw new ArgumentNullException(nameof(progressStates));
-
             if (predicate is null)
                 throw new ArgumentNullException(nameof(predicate));
 
@@ -90,32 +72,33 @@ namespace ExpeditionsReforged.Systems
             {
                 progressLookup.TryGetValue(definition.Id, out var progress);
                 if (predicate(definition, progress))
-                {
                     yield return definition;
-                }
             }
         }
 
-        /// <summary>
-        /// Retrieves expeditions that are eligible for daily selection.
-        /// </summary>
         public IEnumerable<ExpeditionDefinition> GetDailyEligible() => _definitionCollection.Where(d => d.IsDailyEligible);
 
-        /// <summary>
-        /// Provides a cloned instance of the expedition with a stable progress hash for a specific player.
-        /// </summary>
         public ExpeditionDefinition CloneForPlayer(string expeditionId, int playerId)
         {
             if (!TryGetExpedition(expeditionId, out var definition))
                 throw new KeyNotFoundException($"Unknown expedition id '{expeditionId}'.");
 
             var clone = definition.Clone();
-            _ = clone.GetStableProgressKey(playerId); // ensures the hash is calculated to keep consistency.
+            _ = clone.GetStableProgressKey(playerId);
             return clone;
         }
 
+        private static string ItemCondition(int itemType) => $"item:{itemType}";
+        private static string NpcCondition(int npcType) => $"npc:{npcType}";
+        private static string RewardItem(int itemType) => $"item:{itemType}";
+
         private void RegisterInternalExpeditions(ICollection<ExpeditionDefinition> definitions)
         {
+            // FIRST FULLY PLAYABLE EXPEDITION:
+            // - Track kill + collect via your existing GlobalNPC/GlobalItem reporters.
+            // - Auto-completes when all deliverables meet their required counts (already in ApplyConditionProgress).
+            // - Rewards are paid on server when claimed.
+
             definitions.Add(new ExpeditionDefinition(
                 id: "expeditions:forest_scout",
                 displayNameKey: "Mods.ExpeditionsReforged.Expeditions.ForestScout.DisplayName",
@@ -128,11 +111,45 @@ namespace ExpeditionsReforged.Systems
                 isRepeatable: true,
                 isDailyEligible: true,
                 npcHeadId: 1,
-                prerequisites: new[] { new ConditionDefinition("boss:eye_of_cthulhu", 1, "Defeat the Eye of Cthulhu") },
-                deliverables: new[] { new DeliverableDefinition("item:wood", 30, true, "Deliver Wood") },
-                rewards: new[] { new RewardDefinition("ItemID.CopperCoin", 25, 50) },
-                dailyRewards: new[] { new RewardDefinition("ItemID.SilverCoin", 5, 15) }));
 
+                // Prerequisites are currently not enforced by gameplay logic (service returns true).
+                // Keep empty for now so it is always startable.
+                prerequisites: Array.Empty<ConditionDefinition>(),
+
+                // Deliverables are the *tracked* conditions.
+                // These IDs MUST match what your reporters emit:
+                //   - ReportKill -> "npc:{npc.type}"
+                //   - ReportItemPickup -> "item:{item.type}"
+                deliverables: new[]
+                {
+                    new DeliverableDefinition(
+                        id: NpcCondition(NPCID.Zombie),
+                        requiredCount: 5,
+                        consumesItems: false,
+                        description: "Slay Zombies"),
+
+                    new DeliverableDefinition(
+                        id: ItemCondition(ItemID.Wood),
+                        requiredCount: 25,
+                        consumesItems: false,
+                        description: "Gather Wood")
+                },
+
+                // Rewards are paid when claimed (server-authoritative).
+                rewards: new[]
+                {
+                    new RewardDefinition(
+                        id: RewardItem(ItemID.SilverCoin),
+                        minStack: 15,
+                        maxStack: 30,
+                        dropChance: 1f)
+                },
+
+                dailyRewards: Array.Empty<RewardDefinition>()
+            ));
+
+            // Optional: keep other definitions registered, but make them consistent so they don't
+            // silently fail tracking if a tester starts them.
             definitions.Add(new ExpeditionDefinition(
                 id: "expeditions:desert_run",
                 displayNameKey: "Mods.ExpeditionsReforged.Expeditions.DesertRun.DisplayName",
@@ -145,10 +162,10 @@ namespace ExpeditionsReforged.Systems
                 isRepeatable: true,
                 isDailyEligible: true,
                 npcHeadId: 2,
-                prerequisites: new[] { new ConditionDefinition("unlock:desert", 1, "Discover the desert") },
-                deliverables: new[] { new DeliverableDefinition("item:cactus", 15, true, "Gather Cactus") },
-                rewards: new[] { new RewardDefinition("ItemID.GoldCoin", 1, 2) },
-                dailyRewards: new[] { new RewardDefinition("ItemID.SilverCoin", 10, 25) }));
+                prerequisites: Array.Empty<ConditionDefinition>(),
+                deliverables: new[] { new DeliverableDefinition(ItemCondition(ItemID.Cactus), 15, false, "Gather Cactus") },
+                rewards: new[] { new RewardDefinition(RewardItem(ItemID.GoldCoin), 1, 1) },
+                dailyRewards: Array.Empty<RewardDefinition>()));
 
             definitions.Add(new ExpeditionDefinition(
                 id: "expeditions:dungeon_probe",
@@ -162,9 +179,14 @@ namespace ExpeditionsReforged.Systems
                 isRepeatable: false,
                 isDailyEligible: false,
                 npcHeadId: 3,
-                prerequisites: new[] { new ConditionDefinition("boss:skeletron", 1, "Defeat Skeletron") },
-                deliverables: new[] { new DeliverableDefinition("item:bone", 20, true, "Collect Bones") },
-                rewards: new[] { new RewardDefinition("ItemID.GoldCoin", 5, 5), new RewardDefinition("ItemID.ShadowKey", 1, 1, 0.5f) }));
+                prerequisites: Array.Empty<ConditionDefinition>(),
+                deliverables: new[] { new DeliverableDefinition(ItemCondition(ItemID.Bone), 20, false, "Collect Bones") },
+                rewards: new[]
+                {
+                    new RewardDefinition(RewardItem(ItemID.GoldCoin), 5, 5),
+                    new RewardDefinition(RewardItem(ItemID.ShadowKey), 1, 1, 0.5f)
+                },
+                dailyRewards: Array.Empty<RewardDefinition>()));
         }
 
         private void FinalizeDefinitions(IEnumerable<ExpeditionDefinition> definitions)
@@ -252,9 +274,7 @@ namespace ExpeditionsReforged.Systems
                 }
 
                 if (!ValidateCollections(definition))
-                {
                     return false;
-                }
 
                 validated = definition.Clone();
                 return true;
