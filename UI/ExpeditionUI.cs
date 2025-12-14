@@ -789,8 +789,7 @@ public class ExpeditionUI : UIState
             Height = StyleDimension.FromPixels(32f),
             BackgroundColor = enabled ? new Color(80, 104, 192) : new Color(60, 60, 60),
             BorderColor = enabled ? new Color(110, 140, 220) : new Color(90, 90, 90),
-            TextColor = enabled ? Color.White : Color.Gray,
-            IgnoreMouseInteraction = !enabled
+            TextColor = enabled ? Color.White : Color.Gray
         };
 
         if (enabled && onClick != null)
