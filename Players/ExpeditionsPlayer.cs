@@ -13,15 +13,49 @@ namespace ExpeditionsReforged.Players
 {
     public class ExpeditionsPlayer : ModPlayer
     {
+        // Expedition data must live on ModPlayer so it is tied to the character file, travels with the player in multiplayer,
+        // and participates in the built-in save/sync lifecycle. All state transitions happen through server-owned flows; the
+        // client UI should only read this state and use the dedicated request packets to ask the server to mutate it.
         public bool ExpeditionUIOpen;
         public bool TrackerUIOpen;
+
+        // Optional client-facing selection. The actual expedition state remains server-authoritative.
         public string TrackedExpeditionId { get; private set; } = string.Empty;
 
+        // Full history of expedition progress for this player (active + completed). Active/complete/track separation is
+        // expressed through the helper methods below rather than mutating this collection directly from UI code.
         private readonly List<ExpeditionProgress> _expeditionProgressEntries = new();
         private readonly Dictionary<string, ExpeditionProgress> _progressByExpeditionId = new(StringComparer.OrdinalIgnoreCase);
         private bool _lastDaytime;
 
         public IReadOnlyList<ExpeditionProgress> ExpeditionProgressEntries => _expeditionProgressEntries;
+
+        /// <summary>
+        /// Returns true when the expedition is present, not orphaned, and marked active on this player.
+        /// </summary>
+        public bool IsExpeditionActive(string expeditionId)
+        {
+            return TryGetExpeditionProgress(expeditionId, out ExpeditionProgress progress) && progress.IsActive && !progress.IsOrphaned;
+        }
+
+        /// <summary>
+        /// Returns true when the expedition has been recorded as completed on this player.
+        /// </summary>
+        public bool IsExpeditionCompleted(string expeditionId)
+        {
+            return TryGetExpeditionProgress(expeditionId, out ExpeditionProgress progress) && progress.IsCompleted;
+        }
+
+        /// <summary>
+        /// Returns a snapshot of active expeditions, excluding orphaned entries for removed definitions.
+        /// </summary>
+        public IReadOnlyList<ExpeditionProgress> GetActiveExpeditions()
+        {
+            return _expeditionProgressEntries
+                .Where(progress => progress.IsActive && !progress.IsOrphaned)
+                .ToList()
+                .AsReadOnly();
+        }
 
         public override void OnEnterWorld()
         {
@@ -66,26 +100,29 @@ namespace ExpeditionsReforged.Players
 
         public override void SaveData(TagCompound tag)
         {
-            if (_expeditionProgressEntries.Count == 0)
-            {
-                tag["TrackedExpeditionId"] = TrackedExpeditionId;
-                return;
-            }
+            tag["TrackedExpeditionId"] = TrackedExpeditionId ?? string.Empty;
 
-            tag["TrackedExpeditionId"] = TrackedExpeditionId;
-            tag["ExpeditionProgress"] = _expeditionProgressEntries
+            List<TagCompound> serializedProgress = _expeditionProgressEntries
+                .Where(progress => progress is not null && !string.IsNullOrWhiteSpace(progress.ExpeditionId))
                 .Select(progress => new TagCompound
                 {
                     ["expeditionId"] = progress.ExpeditionId,
-                    ["stableKey"] = progress.StableProgressKey,
+                    ["stableKey"] = progress.StableProgressKey ?? string.Empty,
                     ["startGameTick"] = progress.StartGameTick,
                     ["isActive"] = progress.IsActive,
                     ["isCompleted"] = progress.IsCompleted,
                     ["rewardsClaimed"] = progress.RewardsClaimed,
                     ["isOrphan"] = progress.IsOrphaned,
-                    ["conditions"] = progress.ConditionProgress.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                    ["conditions"] = progress.ConditionProgress
+                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Key))
+                        .ToDictionary(kvp => kvp.Key, kvp => Math.Max(0, kvp.Value))
                 })
                 .ToList();
+
+            if (serializedProgress.Count > 0)
+            {
+                tag["ExpeditionProgress"] = serializedProgress;
+            }
         }
 
         public override void LoadData(TagCompound tag)
@@ -94,7 +131,7 @@ namespace ExpeditionsReforged.Players
             _progressByExpeditionId.Clear();
             TrackedExpeditionId = tag.GetString("TrackedExpeditionId") ?? string.Empty;
 
-            if (!tag.TryGet("ExpeditionProgress", out List<TagCompound> savedProgressEntries))
+            if (!tag.TryGet("ExpeditionProgress", out List<TagCompound> savedProgressEntries) || savedProgressEntries is null)
             {
                 return;
             }
@@ -103,19 +140,30 @@ namespace ExpeditionsReforged.Players
 
             foreach (TagCompound entry in savedProgressEntries)
             {
-                string expeditionId = entry.GetString("expeditionId");
-                if (string.IsNullOrWhiteSpace(expeditionId))
+                if (entry is null)
                 {
                     continue;
                 }
 
+                if (!entry.TryGet("expeditionId", out string expeditionId) || string.IsNullOrWhiteSpace(expeditionId))
+                {
+                    continue;
+                }
+
+                entry.TryGet("stableKey", out string stableKey);
+                entry.TryGet("startGameTick", out long startGameTick);
+                entry.TryGet("isActive", out bool isActive);
+                entry.TryGet("isCompleted", out bool isCompleted);
+                entry.TryGet("rewardsClaimed", out bool rewardsClaimed);
+                entry.TryGet("isOrphan", out bool isOrphaned);
+
                 ExpeditionProgress progress = new()
                 {
                     ExpeditionId = expeditionId,
-                    StableProgressKey = entry.GetString("stableKey"),
-                    StartGameTick = entry.GetLong("startGameTick"),
-                    IsActive = entry.GetBool("isActive"),
-                    IsOrphaned = entry.GetBool("isOrphan")
+                    StableProgressKey = stableKey ?? string.Empty,
+                    StartGameTick = startGameTick,
+                    IsActive = isActive,
+                    IsOrphaned = isOrphaned
                 };
 
                 if (string.IsNullOrWhiteSpace(progress.StableProgressKey) && registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
@@ -124,16 +172,17 @@ namespace ExpeditionsReforged.Players
                 }
 
                 if (entry.GetBool("isCompleted"))
+                if (isCompleted)
                 {
                     progress.Complete();
                 }
 
-                if (entry.GetBool("rewardsClaimed"))
+                if (rewardsClaimed)
                 {
                     progress.ClaimRewards();
                 }
 
-                if (entry.TryGet("conditions", out Dictionary<string, int> savedConditions))
+                if (entry.TryGet("conditions", out Dictionary<string, int> savedConditions) && savedConditions is not null)
                 {
                     foreach ((string conditionId, int value) in savedConditions)
                     {
@@ -146,8 +195,25 @@ namespace ExpeditionsReforged.Players
                     }
                 }
 
+                if (registry.TryGetDefinition(expeditionId, out ExpeditionDefinition definition))
+                {
+                    progress.IsOrphaned = false;
+                    if (string.IsNullOrWhiteSpace(progress.StableProgressKey))
+                    {
+                        progress.StableProgressKey = definition.GetStableProgressKey(Player.whoAmI);
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(progress.StableProgressKey))
+                {
+                    progress.StableProgressKey = string.Empty;
+                }
+
                 AddOrReplaceProgress(progress);
             }
+
+            // Validate tracked id and newly loaded entries against the registry to stay resilient to mod updates.
+            ReconcileDefinitions();
         }
 
         public override void SyncPlayer(int toWho, int fromWho, bool newPlayer)
@@ -194,6 +260,8 @@ namespace ExpeditionsReforged.Players
             ReportConditionProgress($"npc:{npc.type}", 1);
         }
 
+        // All mutation helpers below should only execute their core logic on the server. Clients exit early after
+        // dispatching a request packet, keeping the server as the authoritative owner of expedition state.
         public bool TryStartExpedition(string expeditionId)
         {
             if (string.IsNullOrWhiteSpace(expeditionId))
