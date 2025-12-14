@@ -29,6 +29,21 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <summary>
         /// Localization key for the descriptive flavor text of the expedition.
         /// </summary>
+        public string DescriptionKey { get; }
+
+        /// <summary>
+        /// The localized, player-facing display name derived from <see cref="DisplayNameKey"/>.
+        /// </summary>
+        public string DisplayName => Language.GetTextValue(DisplayNameKey);
+
+        /// <summary>
+        /// The localized, player-facing description derived from <see cref="DescriptionKey"/>.
+        /// </summary>
+        public string Description => Language.GetTextValue(DescriptionKey);
+
+        /// <summary>
+        /// Categorical grouping for UI filtering and balance.
+        /// </summary>
         public ExpeditionCategory Category { get; }
 
         /// <summary>
@@ -102,7 +117,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <param name="id">Unique identifier for the expedition.</param>
         /// <param name="displayNameKey">Localization key for the player-facing expedition name.</param>
         /// <param name="descriptionKey">Localization key for the expedition description.</param>
-        /// <param name="categoryKey">Localization key for the high-level grouping used by UI filtering and progression.</param>
+        /// <param name="category">Categorical grouping used by UI filtering and progression.</param>
         /// <param name="rarity">Rarity tier used by selection logic.</param>
         /// <param name="durationTicks">Duration of the expedition in game ticks.</param>
         /// <param name="difficulty">Numeric difficulty rating used for balancing and matchmaking.</param>
@@ -116,7 +131,8 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <param name="dailyRewards">Additional rewards when selected as daily content.</param>
         public ExpeditionDefinition(
             string id,
-            string displayName,
+            string displayNameKey,
+            string descriptionKey,
             ExpeditionCategory category,
             int rarity,
             int durationTicks,
@@ -130,8 +146,9 @@ namespace ExpeditionsReforged.Content.Expeditions
             IEnumerable<RewardDefinition>? rewards = null,
             IEnumerable<RewardDefinition>? dailyRewards = null)
         {
-            Id = id ?? throw new ArgumentNullException(nameof(id));
-            DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+            Id = !string.IsNullOrWhiteSpace(id) ? id : throw new ArgumentException("Expedition id cannot be null or whitespace", nameof(id));
+            DisplayNameKey = !string.IsNullOrWhiteSpace(displayNameKey) ? displayNameKey : throw new ArgumentException("Display name key cannot be null or whitespace", nameof(displayNameKey));
+            DescriptionKey = !string.IsNullOrWhiteSpace(descriptionKey) ? descriptionKey : throw new ArgumentException("Description key cannot be null or whitespace", nameof(descriptionKey));
             Category = category;
             Rarity = rarity;
             DurationTicks = durationTicks;
@@ -156,7 +173,7 @@ namespace ExpeditionsReforged.Content.Expeditions
                 id: Id,
                 displayNameKey: DisplayNameKey,
                 descriptionKey: DescriptionKey,
-                categoryKey: CategoryKey,
+                category: Category,
                 rarity: Rarity,
                 durationTicks: DurationTicks,
                 difficulty: Difficulty,
@@ -188,7 +205,7 @@ namespace ExpeditionsReforged.Content.Expeditions
             builder.Append(Id)
                 .Append('|').Append(DisplayNameKey)
                 .Append('|').Append(DescriptionKey)
-                .Append('|').Append(CategoryKey)
+                .Append('|').Append(Category)
                 .Append('|').Append(Rarity).Append('|').Append(DurationTicks).Append('|').Append(Difficulty)
                 .Append('|').Append(MinPlayerLevel).Append('|').Append(IsRepeatable).Append('|').Append(IsDailyEligible)
                 .Append('|').Append(NpcHeadId);
