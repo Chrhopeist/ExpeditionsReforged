@@ -215,8 +215,7 @@ public class TrackerUI : UIState
             Height = StyleDimension.FromPixels(32f * _scale),
             BackgroundColor = enabled ? new Color(80, 104, 192) * _currentAlpha : new Color(60, 60, 60) * _currentAlpha,
             BorderColor = enabled ? new Color(110, 140, 220) * _currentAlpha : new Color(90, 90, 90) * _currentAlpha,
-            TextColor = enabled ? Color.White : Color.Gray,
-            IgnoreMouseInteraction = !enabled
+            TextColor = enabled ? Color.White : Color.Gray
         };
 
         if (enabled && onClick != null)
