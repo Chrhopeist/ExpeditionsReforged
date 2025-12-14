@@ -118,7 +118,8 @@ namespace ExpeditionsReforged.Systems
         {
             definitions.Add(new ExpeditionDefinition(
                 id: "expeditions:forest_scout",
-                displayName: "Forest Scout",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.ForestScout.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.ForestScout.Description",
                 category: ExpeditionCategory.Forest,
                 rarity: 1,
                 durationTicks: 60 * 60 * 8,
@@ -134,7 +135,8 @@ namespace ExpeditionsReforged.Systems
 
             definitions.Add(new ExpeditionDefinition(
                 id: "expeditions:desert_run",
-                displayName: "Desert Run",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.DesertRun.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.DesertRun.Description",
                 category: ExpeditionCategory.Desert,
                 rarity: 2,
                 durationTicks: 60 * 60 * 12,
@@ -150,7 +152,8 @@ namespace ExpeditionsReforged.Systems
 
             definitions.Add(new ExpeditionDefinition(
                 id: "expeditions:dungeon_probe",
-                displayName: "Dungeon Probe",
+                displayNameKey: "Mods.ExpeditionsReforged.Expeditions.DungeonProbe.DisplayName",
+                descriptionKey: "Mods.ExpeditionsReforged.Expeditions.DungeonProbe.Description",
                 category: ExpeditionCategory.Dungeon,
                 rarity: 3,
                 durationTicks: 60 * 60 * 24,
