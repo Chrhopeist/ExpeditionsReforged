@@ -576,38 +576,46 @@ Width = StyleDimension.FromPercent(1f),
 Height = StyleDimension.FromPixels(36f)
 };
 
-        // Gameplay wiring stays in ModPlayer so the UI remains client-only; these callbacks will be
-        // the junction point for future multiplayer-safe expedition start/turn-in logic.
-        bool canStart = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
-        bool canTurnIn = progress is { IsCompleted: true } && !progress.RewardsClaimed;
-        bool canTrack = player != null;
-
-        // Replace the existing startButton creation in ShowDetails method:
-
-bool canStartExpedition = progress is null || (!progress.IsCompleted || definition.IsRepeatable);
-var startButton = CreateActionButton("Start", canStartExpedition, () =>
+var buttonRow = new UIElement
 {
-// TODO: In multiplayer, this will become a packet request to the server.
-// For now, this only works in singleplayer and when hosting.
-if (Main.netMode == NetmodeID.MultiplayerClient)
-{
-// Client cannot start expeditions directly - show friendly message
-Main.NewText("Starting expeditions in multiplayer is not yet supported.", 255, 100, 100);
-return;
-}
+    Width = StyleDimension.FromPercent(1f),
+    Height = StyleDimension.FromPixels(36f)
+};
 
-if (player == null)
-{
-return;
-}
+ExpeditionProgress? progress = null;
+activePlayer?.TryGetExpeditionProgress(definition.Id, out progress);
 
-// Use the authoritative service to start the expedition
-if (ExpeditionService.TryStartExpedition(player.Player, definition.Id, out string? failReasonKey))
+bool canStart = progress == null || (!progress.IsCompleted || definition.IsRepeatable);
+bool canClaim = progress != null && progress.IsCompleted && !progress.RewardsClaimed;
+bool isTracked = activePlayer != null &&
+    string.Equals(activePlayer.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
+
+var startButton = CreateActionButton("Start", canStart, () =>
 {
-// Success: refresh UI to reflect the new active state
-Main.NewText($"Started expedition: {definition.DisplayName}", 100, 255, 100);
-RequestExpeditionListRefresh();
-}
+    activePlayer?.TryStartExpedition(definition.Id);
+    RequestExpeditionListRefresh();
+});
+startButton.Left.Set(0f, 0f);
+buttonRow.Append(startButton);
+
+var claimButton = CreateActionButton("Claim", canClaim, () =>
+{
+    activePlayer?.TryClaimRewards(definition.Id);
+    RequestExpeditionListRefresh();
+});
+claimButton.Left.Set(140f, 0f);
+buttonRow.Append(claimButton);
+
+var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", activePlayer != null, () =>
+{
+    activePlayer?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
+    RequestExpeditionListRefresh();
+});
+trackButton.Left.Set(280f, 0f);
+buttonRow.Append(trackButton);
+
+_detailsList.Add(buttonRow);
+
 else
 {
 // Failure: show localized error message
