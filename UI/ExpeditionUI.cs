@@ -76,10 +76,13 @@ BorderColor = new Color(69, 82, 110)
 };
 
 _rootPanel.SetPadding(12f);
-_rootPanel.Left.Set(0f, 0f);
-_rootPanel.Top.Set(0f, 0f);
-_rootPanel.Width.Set(0f, 1f);
-_rootPanel.Height.Set(0f, 1f);
+// Match Terraria's inventory footprint: centered, fixed pixel size with safe max bounds.
+_rootPanel.HAlign = 0.5f;
+_rootPanel.VAlign = 0.5f;
+_rootPanel.Width = StyleDimension.FromPixels(900f);
+_rootPanel.Height = StyleDimension.FromPixels(600f);
+_rootPanel.MaxWidth = StyleDimension.FromPixels(1100f);
+_rootPanel.MaxHeight = StyleDimension.FromPixels(720f);
 
 // Client-only close control anchored to the top-right of the root panel.
 _closeButton = new UITextPanel<string>("X", 0.9f, true)
