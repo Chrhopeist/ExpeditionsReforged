@@ -65,10 +65,15 @@ private bool _needsPopulate = true;
 private bool _wasPlayerOpen;
 private UITextPanel<string> _closeButton = null!;
 private float _uiScale = 1f;
+private UIElement _detailsListContainer = null!;
+private UIElement _detailsFooter = null!;
+private UIElement _detailsButtonRow = null!;
 
 private const float BaseScreenHeight = 1080f;
 private const float MinUiScale = 0.85f;
 private const float MaxUiScale = 1f;
+private const float ListPanelWidthPixels = 320f;
+private const float DetailsFooterHeightPixels = 42f;
 
 public override void OnInitialize()
 {
@@ -100,7 +105,8 @@ BackgroundColor = new Color(34, 40, 52),
 BorderColor = new Color(69, 82, 110)
 };
 
-_rootPanel.SetPadding(Scale(12f));
+// Slightly tighter padding keeps the layout readable at 1024x768 without cramped panels.
+_rootPanel.SetPadding(Scale(8f));
 // Match Terraria's inventory footprint: centered, fixed pixel size with safe max bounds.
 _rootPanel.HAlign = 0.5f;
 _rootPanel.VAlign = 0.5f;
@@ -168,12 +174,11 @@ private void BuildLayout()
 {
 _entries.Clear();
 
-const float listWidthPercent = 0.45f;
-
+float listWidthPixels = Scale(ListPanelWidthPixels);
 var controlsBar = new UIElement
 {
 Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(Scale(86f))
+Height = StyleDimension.FromPixels(Scale(72f))
 };
 
 BuildControls(controlsBar);
@@ -182,20 +187,21 @@ controlsBar.Append(_closeButton);
 
 _bodyContainer = new UIElement
 {
-Top = StyleDimension.FromPixels(Scale(90f)),
+Top = StyleDimension.FromPixels(Scale(74f)),
 Width = StyleDimension.FromPercent(1f),
-Height = new StyleDimension(-Scale(90f), 1f)
+Height = new StyleDimension(-Scale(74f), 1f)
 };
 
 var listContainer = new UIElement
 {
-Width = new StyleDimension(-Scale(8f), listWidthPercent),
+Width = StyleDimension.FromPixels(listWidthPixels),
 Height = StyleDimension.FromPercent(1f)
 };
 
 _expeditionList = new UIList
 {
-ListPadding = Scale(6f),
+// Match padding with other scrollable lists for consistent spacing.
+ListPadding = Scale(4f),
 Width = StyleDimension.FromPercent(1f),
 Height = StyleDimension.FromPercent(1f)
 };
@@ -223,14 +229,15 @@ listContainer.Append(_rarityMarkers);
 
 _detailsPanel = new UIPanel
 {
-Left = new StyleDimension(Scale(8f), listWidthPercent),
-Width = new StyleDimension(-Scale(8f), 1f - listWidthPercent),
+Left = StyleDimension.FromPixels(listWidthPixels + Scale(8f)),
+Width = new StyleDimension(-listWidthPixels - Scale(8f), 1f),
 Height = StyleDimension.FromPercent(1f),
 BackgroundColor = new Color(40, 46, 60),
 BorderColor = new Color(69, 82, 110)
 };
 
-_detailsPanel.SetPadding(Scale(12f));
+// Reduce padding to keep the details panel readable on low-resolution displays.
+_detailsPanel.SetPadding(Scale(8f));
 
 BuildDetailsPanel();
 
@@ -264,7 +271,7 @@ VAlign = 0.5f
 };
 
 _categoryButton.Left.Set(x, 0f);
-_categoryButton.Top.Set(Scale(12f), 0f);
+_categoryButton.Top.Set(Scale(8f), 0f);
 _categoryButton.OnLeftClick += (_, _) => CycleCategory();
 AddTooltip(_categoryButton, "Cycle expedition categories");
 controlsBar.Append(_categoryButton);
@@ -278,7 +285,7 @@ VAlign = 0.5f
 };
 
 _completionButton.Left.Set(x, 0f);
-_completionButton.Top.Set(Scale(12f), 0f);
+_completionButton.Top.Set(Scale(8f), 0f);
 _completionButton.OnLeftClick += (_, _) => CycleCompletionFilter();
 AddTooltip(_completionButton, "Filter by availability/active/completed");
 controlsBar.Append(_completionButton);
@@ -292,7 +299,7 @@ VAlign = 0.5f
 };
 
 _repeatableButton.Left.Set(x, 0f);
-_repeatableButton.Top.Set(Scale(12f), 0f);
+_repeatableButton.Top.Set(Scale(8f), 0f);
 _repeatableButton.OnLeftClick += (_, _) => ToggleRepeatable();
 AddTooltip(_repeatableButton, "Toggle showing only repeatable expeditions");
 controlsBar.Append(_repeatableButton);
@@ -306,7 +313,7 @@ VAlign = 0.5f
 };
 
 _trackedFilterButton.Left.Set(x, 0f);
-_trackedFilterButton.Top.Set(Scale(12f), 0f);
+_trackedFilterButton.Top.Set(Scale(8f), 0f);
 _trackedFilterButton.OnLeftClick += (_, _) => ToggleTrackedFilter();
 AddTooltip(_trackedFilterButton, "Toggle showing only tracked expedition");
 controlsBar.Append(_trackedFilterButton);
@@ -321,7 +328,7 @@ Color = Color.Gray
 };
 
 _npcHeadButton.Left.Set(x, 0f);
-_npcHeadButton.Top.Set(Scale(10f), 0f);
+_npcHeadButton.Top.Set(Scale(6f), 0f);
 _npcHeadButton.Width.Set(Scale(48f), 0f);
 _npcHeadButton.Height.Set(Scale(48f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
@@ -349,7 +356,7 @@ VAlign = 0.5f
 };
 
 _sortButton.Left.Set(x, 0f);
-_sortButton.Top.Set(Scale(12f), 0f);
+_sortButton.Top.Set(Scale(8f), 0f);
 _sortButton.OnLeftClick += (_, _) => CycleSortMode();
 AddTooltip(_sortButton, "Cycle sorting mode");
 controlsBar.Append(_sortButton);
@@ -363,7 +370,7 @@ VAlign = 0.5f
 };
 
 _sortDirectionButton.Left.Set(x, 0f);
-_sortDirectionButton.Top.Set(Scale(12f), 0f);
+_sortDirectionButton.Top.Set(Scale(8f), 0f);
 _sortDirectionButton.OnLeftClick += (_, _) => ToggleSortDirection();
 AddTooltip(_sortDirectionButton, "Toggle ascending/descending");
 controlsBar.Append(_sortDirectionButton);
@@ -498,11 +505,19 @@ return true;
 
 private void BuildDetailsPanel()
 {
+// The details panel is split into a scrollable content region and a fixed footer for action buttons.
+_detailsListContainer = new UIElement
+{
+Width = StyleDimension.FromPercent(1f),
+Height = new StyleDimension(-Scale(DetailsFooterHeightPixels), 1f)
+};
+
 _detailsList = new UIList
 {
 Width = StyleDimension.FromPercent(1f),
 Height = StyleDimension.FromPercent(1f),
-ListPadding = Scale(8f)
+// Match padding with the expedition list for consistency.
+ListPadding = Scale(4f)
 };
 
 _detailsPlaceholder = new UIText("Select an expedition to view its details.", 0.9f * _uiScale)
@@ -510,6 +525,24 @@ _detailsPlaceholder = new UIText("Select an expedition to view its details.", 0.
 HAlign = 0f,
 VAlign = 0f
 };
+
+_detailsFooter = new UIElement
+{
+Width = StyleDimension.FromPercent(1f),
+Height = StyleDimension.FromPixels(Scale(DetailsFooterHeightPixels)),
+VAlign = 1f
+};
+
+_detailsButtonRow = new UIElement
+{
+Width = StyleDimension.FromPercent(1f),
+Height = StyleDimension.FromPixels(Scale(36f)),
+VAlign = 0.5f
+};
+
+_detailsFooter.Append(_detailsButtonRow);
+_detailsPanel.Append(_detailsListContainer);
+_detailsPanel.Append(_detailsFooter);
 
 ShowPlaceholder();
 }
@@ -539,15 +572,17 @@ private void ShowPlaceholder()
 {
 if (_detailsList.Parent != null)
 {
-_detailsPanel.RemoveChild(_detailsList);
+_detailsListContainer.RemoveChild(_detailsList);
 }
 
 if (_detailsPlaceholder.Parent == null)
 {
-_detailsPanel.Append(_detailsPlaceholder);
+_detailsPlaceholder.Top.Set(Scale(4f), 0f);
+_detailsListContainer.Append(_detailsPlaceholder);
 }
 
 _detailsPlaceholder.SetText("Select an expedition to view its details.");
+_detailsButtonRow.RemoveAllChildren();
 }
 
 private void ShowDetails(ExpeditionDefinition definition)
@@ -560,12 +595,12 @@ return;
 
 if (_detailsPlaceholder.Parent != null)
 {
-_detailsPanel.RemoveChild(_detailsPlaceholder);
+_detailsListContainer.RemoveChild(_detailsPlaceholder);
 }
 
 if (_detailsList.Parent == null)
 {
-_detailsPanel.Append(_detailsList);
+_detailsListContainer.Append(_detailsList);
 }
 
 _detailsList.Clear();
@@ -642,13 +677,7 @@ _detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f * _uiScale));
 }
 }
 
-var buttonRow = new UIElement
-{
-    Width = StyleDimension.FromPercent(1f),
-    Height = StyleDimension.FromPixels(Scale(36f))
-};
-
-
+_detailsButtonRow.RemoveAllChildren();
 bool canStart = progress == null || (!progress.IsCompleted || definition.IsRepeatable);
 bool canClaim = progress != null && progress.IsCompleted && !progress.RewardsClaimed;
 bool isTracked = activePlayer != null &&
@@ -677,25 +706,23 @@ var startButton = CreateActionButton("Start", canStart, () =>
 });
 
 startButton.Left.Set(0f, 0f);
-buttonRow.Append(startButton);
+_detailsButtonRow.Append(startButton);
 
 var claimButton = CreateActionButton("Claim", canClaim, () =>
 {
     activePlayer?.TryClaimRewards(definition.Id);
     RequestExpeditionListRefresh();
 });
-claimButton.Left.Set(Scale(140f), 0f);
-buttonRow.Append(claimButton);
+claimButton.Left.Set(Scale(132f), 0f);
+_detailsButtonRow.Append(claimButton);
 
 var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", activePlayer != null, () =>
 {
     activePlayer?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
     RequestExpeditionListRefresh();
 });
-trackButton.Left.Set(Scale(280f), 0f);
-buttonRow.Append(trackButton);
-
-_detailsList.Add(buttonRow);
+trackButton.Left.Set(Scale(264f), 0f);
+_detailsButtonRow.Append(trackButton);
 }
 
 private static string FormatDuration(int durationTicks)
