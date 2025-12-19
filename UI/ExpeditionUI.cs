@@ -106,7 +106,6 @@ player.ExpeditionUIOpen = false;
 };
 
 AddTooltip(_closeButton, "Close");
-_rootPanel.Append(_closeButton);
 
 Append(_rootPanel);
 
@@ -139,6 +138,8 @@ Height = StyleDimension.FromPixels(86f)
 };
 
 BuildControls(controlsBar);
+// Keep the close button aligned with the controls bar to avoid covering the list or details panels.
+controlsBar.Append(_closeButton);
 
 _bodyContainer = new UIElement
 {
