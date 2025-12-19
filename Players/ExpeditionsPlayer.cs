@@ -102,26 +102,44 @@ namespace ExpeditionsReforged.Players
         {
             tag["TrackedExpeditionId"] = TrackedExpeditionId ?? string.Empty;
 
-            List<TagCompound> serializedProgress = _expeditionProgressEntries
-                .Where(progress => progress is not null && !string.IsNullOrWhiteSpace(progress.ExpeditionId))
-                .Select(progress => new TagCompound
+            TagCompound expeditionsTag = new();
+
+            foreach (ExpeditionProgress progress in _expeditionProgressEntries)
+            {
+                if (progress is null || string.IsNullOrWhiteSpace(progress.ExpeditionId))
                 {
-                    ["expeditionId"] = progress.ExpeditionId,
+                    continue;
+                }
+
+                TagCompound conditionsTag = new();
+                foreach ((string conditionId, int value) in progress.ConditionProgress)
+                {
+                    if (string.IsNullOrWhiteSpace(conditionId))
+                    {
+                        continue;
+                    }
+
+                    // TagCompound requires primitives; nested compounds keep condition data compatible with tModLoader saves.
+                    conditionsTag[conditionId] = Math.Max(0, value);
+                }
+
+                TagCompound expeditionTag = new()
+                {
                     ["stableKey"] = progress.StableProgressKey ?? string.Empty,
                     ["startGameTick"] = progress.StartGameTick,
                     ["isActive"] = progress.IsActive,
                     ["isCompleted"] = progress.IsCompleted,
                     ["rewardsClaimed"] = progress.RewardsClaimed,
                     ["isOrphan"] = progress.IsOrphaned,
-                    ["conditions"] = progress.ConditionProgress
-                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Key))
-                        .ToDictionary(kvp => kvp.Key, kvp => Math.Max(0, kvp.Value))
-                })
-                .ToList();
+                    ["conditions"] = conditionsTag
+                };
 
-            if (serializedProgress.Count > 0)
+                expeditionsTag[progress.ExpeditionId] = expeditionTag;
+            }
+
+            if (expeditionsTag.Count > 0)
             {
-                tag["ExpeditionProgress"] = serializedProgress;
+                tag["expeditions"] = expeditionsTag;
             }
         }
 
@@ -131,31 +149,26 @@ namespace ExpeditionsReforged.Players
             _progressByExpeditionId.Clear();
             TrackedExpeditionId = tag.GetString("TrackedExpeditionId") ?? string.Empty;
 
-            if (!tag.TryGet("ExpeditionProgress", out List<TagCompound> savedProgressEntries) || savedProgressEntries is null)
+            if (!tag.TryGet("expeditions", out TagCompound savedExpeditions) || savedExpeditions is null)
             {
                 return;
             }
 
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
 
-            foreach (TagCompound entry in savedProgressEntries)
+            foreach ((string expeditionId, object expeditionEntry) in savedExpeditions)
             {
-                if (entry is null)
+                if (string.IsNullOrWhiteSpace(expeditionId) || expeditionEntry is not TagCompound expeditionTag)
                 {
                     continue;
                 }
 
-                if (!entry.TryGet("expeditionId", out string expeditionId) || string.IsNullOrWhiteSpace(expeditionId))
-                {
-                    continue;
-                }
-
-                entry.TryGet("stableKey", out string stableKey);
-                entry.TryGet("startGameTick", out long startGameTick);
-                entry.TryGet("isActive", out bool isActive);
-                entry.TryGet("isCompleted", out bool isCompleted);
-                entry.TryGet("rewardsClaimed", out bool rewardsClaimed);
-                entry.TryGet("isOrphan", out bool isOrphaned);
+                expeditionTag.TryGet("stableKey", out string stableKey);
+                expeditionTag.TryGet("startGameTick", out long startGameTick);
+                bool isActive = expeditionTag.GetBool("isActive");
+                bool isCompleted = expeditionTag.GetBool("isCompleted");
+                bool rewardsClaimed = expeditionTag.GetBool("rewardsClaimed");
+                bool isOrphaned = expeditionTag.GetBool("isOrphan");
 
                 ExpeditionProgress progress = new()
                 {
@@ -172,8 +185,7 @@ namespace ExpeditionsReforged.Players
                     progress.StableProgressKey = definition.GetStableProgressKey(Player.whoAmI);
                 }
 
-                if (entry.GetBool("isCompleted"))
-                if (isCompleted)
+                if (expeditionTag.GetBool("isCompleted") && isCompleted)
                 {
                     progress.Complete();
                 }
@@ -183,16 +195,19 @@ namespace ExpeditionsReforged.Players
                     progress.ClaimRewards();
                 }
 
-                if (entry.TryGet("conditions", out Dictionary<string, int> savedConditions) && savedConditions is not null)
+                if (expeditionTag.TryGet("conditions", out TagCompound savedConditions) && savedConditions is not null)
                 {
-                    foreach ((string conditionId, int value) in savedConditions)
+                    foreach ((string conditionId, object value) in savedConditions)
                     {
                         if (string.IsNullOrWhiteSpace(conditionId))
                         {
                             continue;
                         }
 
-                        progress.ConditionProgress[conditionId] = Math.Max(0, value);
+                        if (value is int intValue)
+                        {
+                            progress.ConditionProgress[conditionId] = Math.Max(0, intValue);
+                        }
                     }
                 }
 
