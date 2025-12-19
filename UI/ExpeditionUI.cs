@@ -63,6 +63,7 @@ private SortMode _sortMode = SortMode.Name;
 private bool _sortAscending = true;
 private bool _needsPopulate = true;
 private bool _wasPlayerOpen;
+private UITextPanel<string> _closeButton = null!;
 
 public override void OnInitialize()
 {
@@ -79,6 +80,33 @@ _rootPanel.Left.Set(0f, 0f);
 _rootPanel.Top.Set(0f, 0f);
 _rootPanel.Width.Set(0f, 1f);
 _rootPanel.Height.Set(0f, 1f);
+
+// Client-only close control anchored to the top-right of the root panel.
+_closeButton = new UITextPanel<string>("X", 0.9f, true)
+{
+HAlign = 1f,
+VAlign = 0f,
+Width = StyleDimension.FromPixels(32f),
+Height = StyleDimension.FromPixels(32f),
+BackgroundColor = new Color(60, 60, 60),
+BorderColor = new Color(110, 140, 220),
+TextColor = Color.White
+};
+
+_closeButton.Left.Set(-42f, 1f);
+_closeButton.Top.Set(10f, 0f);
+_closeButton.OnLeftClick += (_, _) =>
+{
+// UI is client-only; closing it should not mutate gameplay state or send packets.
+ExpeditionsPlayer? player = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
+if (player != null)
+{
+player.ExpeditionUIOpen = false;
+}
+};
+
+AddTooltip(_closeButton, "Close");
+_rootPanel.Append(_closeButton);
 
 Append(_rootPanel);
 
