@@ -256,29 +256,27 @@ _rootPanel.Append(_bodyContainer);
 
 private void BuildControls(UIElement controlsBar)
 {
-// The filter bar uses a vertical layout to keep controls inside the panel width at lower resolutions.
-float filterBarWidth = Math.Max(0f, _rootPanel.Width.Pixels - (_rootPanel.PaddingLeft + _rootPanel.PaddingRight));
-var filterBar = new UIList
+// Build a single-row control strip to keep every filter in one horizontal band.
+var topControlsRow = new UIElement
 {
-Width = StyleDimension.FromPixels(filterBarWidth),
-Height = StyleDimension.FromPercent(1f),
-ListPadding = Scale(FilterRowPaddingPixels)
+Width = StyleDimension.FromPercent(1f),
+Height = StyleDimension.FromPixels(Scale(FilterRowHeightPixels)),
+VAlign = 0.5f
 };
 
-filterBar.SetPadding(0f);
-controlsBar.Append(filterBar);
+topControlsRow.SetPadding(0f);
+controlsBar.Append(topControlsRow);
 
-var categoryRow = CreateFilterRow();
 var categoryLabel = CreateFilterLabel("Category:", 80f);
-categoryRow.Append(categoryLabel);
+topControlsRow.Append(categoryLabel);
 
 _categoryButton = CreateFilterButton(_selectedCategory, 170f);
 _categoryButton.OnLeftClick += (_, _) => CycleCategory();
 AddTooltip(_categoryButton, "Cycle expedition categories");
-categoryRow.Append(_categoryButton);
+topControlsRow.Append(_categoryButton);
 
 var npcLabel = CreateFilterLabel("NPC:", 45f);
-categoryRow.Append(npcLabel);
+topControlsRow.Append(npcLabel);
 
 _npcHeadButton = new UIImage(TextureAssets.MagicPixel)
 {
@@ -291,85 +289,157 @@ _npcHeadButton.Width.Set(Scale(36f), 0f);
 _npcHeadButton.Height.Set(Scale(36f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
 AddTooltip(_npcHeadButton, "Cycle NPC head filter");
-categoryRow.Append(_npcHeadButton);
-filterBar.Add(categoryRow);
-LayoutRow(categoryRow, categoryLabel, _categoryButton, npcLabel, _npcHeadButton);
+topControlsRow.Append(_npcHeadButton);
 
-var availabilityRow = CreateFilterRow();
 _completionButton = CreateFilterButton(_completionFilter.ToString(), 150f);
 _completionButton.OnLeftClick += (_, _) => CycleCompletionFilter();
 AddTooltip(_completionButton, "Filter by availability/active/completed");
-availabilityRow.Append(_completionButton);
+topControlsRow.Append(_completionButton);
 
 _repeatableButton = CreateFilterButton("Repeatable: Any", 170f);
 _repeatableButton.OnLeftClick += (_, _) => ToggleRepeatable();
 AddTooltip(_repeatableButton, "Toggle showing only repeatable expeditions");
-availabilityRow.Append(_repeatableButton);
-filterBar.Add(availabilityRow);
-LayoutRow(availabilityRow, _completionButton, _repeatableButton);
+topControlsRow.Append(_repeatableButton);
 
-var trackingRow = CreateFilterRow();
 _trackedFilterButton = CreateFilterButton("Tracked: Any", 150f);
 _trackedFilterButton.OnLeftClick += (_, _) => ToggleTrackedFilter();
 AddTooltip(_trackedFilterButton, "Toggle showing only tracked expedition");
-trackingRow.Append(_trackedFilterButton);
+topControlsRow.Append(_trackedFilterButton);
 
 var sortLabel = CreateFilterLabel("Sort:", 40f);
-trackingRow.Append(sortLabel);
+topControlsRow.Append(sortLabel);
 
 _sortButton = CreateFilterButton(_sortMode.ToString(), 150f);
 _sortButton.OnLeftClick += (_, _) => CycleSortMode();
 AddTooltip(_sortButton, "Cycle sorting mode");
-trackingRow.Append(_sortButton);
+topControlsRow.Append(_sortButton);
 
 _sortDirectionButton = CreateFilterButton(_sortAscending ? "Ascending" : "Descending", 150f);
 _sortDirectionButton.OnLeftClick += (_, _) => ToggleSortDirection();
 AddTooltip(_sortDirectionButton, "Toggle ascending/descending");
-trackingRow.Append(_sortDirectionButton);
-filterBar.Add(trackingRow);
-LayoutRow(trackingRow, _trackedFilterButton, sortLabel, _sortButton, _sortDirectionButton);
+topControlsRow.Append(_sortDirectionButton);
+
+LayoutControlsRow(
+topControlsRow,
+categoryLabel,
+_categoryButton,
+npcLabel,
+_npcHeadButton,
+_completionButton,
+_repeatableButton,
+_trackedFilterButton,
+sortLabel,
+_sortButton,
+_sortDirectionButton);
 }
 
-private UIElement CreateFilterRow()
+private void LayoutControlsRow(UIElement row, params UIElement[] children)
 {
-var row = new UIElement
-{
-Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(Scale(FilterRowHeightPixels))
-};
-
-row.SetPadding(0f);
-return row;
-}
-
-private void LayoutRow(UIElement row, params UIElement[] children)
-{
-// Use a bounded layout for filter rows since UIList does not support horizontal flow.
-// Center within the row when space allows, otherwise left-align to avoid clipping.
+// Manually lay out controls so they stay on one row and shrink buttons as needed.
 float spacing = Scale(FilterButtonPaddingPixels);
 row.Recalculate();
 float rowWidth = row.GetInnerDimensions().Width;
 
-float totalWidth = 0f;
-for (int i = 0; i < children.Length; i++)
+float minButtonWidth = Scale(80f);
+float npcHeadWidth = _npcHeadButton?.Width.Pixels ?? Scale(36f);
+float npcHeadHeight = _npcHeadButton?.Height.Pixels ?? Scale(36f);
+
+var preferredWidths = new Dictionary<UIElement, float>
 {
-UIElement element = children[i];
+{ _categoryButton, Scale(170f) },
+{ _completionButton, Scale(150f) },
+{ _repeatableButton, Scale(170f) },
+{ _trackedFilterButton, Scale(150f) },
+{ _sortButton, Scale(150f) },
+{ _sortDirectionButton, Scale(150f) }
+};
+
+float fixedWidth = 0f;
+float totalPreferredButtonWidth = 0f;
+
+foreach (UIElement element in children)
+{
 element.Recalculate();
-totalWidth += element.GetOuterDimensions().Width;
-if (i < children.Length - 1)
+if (element == _npcHeadButton)
 {
-totalWidth += spacing;
+fixedWidth += npcHeadWidth;
+continue;
+}
+
+if (preferredWidths.TryGetValue(element, out float preferredWidth))
+{
+totalPreferredButtonWidth += preferredWidth;
+continue;
+}
+
+fixedWidth += element.GetOuterDimensions().Width;
+}
+
+float totalSpacing = spacing * Math.Max(0, children.Length - 1);
+float availableForButtons = Math.Max(0f, rowWidth - fixedWidth - totalSpacing);
+float scale = totalPreferredButtonWidth > 0f ? Math.Min(1f, availableForButtons / totalPreferredButtonWidth) : 1f;
+
+var resolvedButtonWidths = new Dictionary<UIElement, float>();
+float remainingWidth = availableForButtons;
+int remainingButtons = 0;
+
+foreach (var pair in preferredWidths)
+{
+float scaledWidth = Math.Max(minButtonWidth, pair.Value * scale);
+resolvedButtonWidths[pair.Key] = scaledWidth;
+remainingWidth -= scaledWidth;
+remainingButtons++;
+}
+
+// If the minimum width forces overflow, compress proportionally while honoring the minimum.
+if (remainingWidth < 0f && remainingButtons > 0)
+{
+float excess = -remainingWidth;
+float adjustableTotal = 0f;
+
+foreach (var pair in preferredWidths)
+{
+float currentWidth = resolvedButtonWidths[pair.Key];
+adjustableTotal += Math.Max(0f, currentWidth - minButtonWidth);
+}
+
+if (adjustableTotal > 0f)
+{
+foreach (var pair in preferredWidths)
+{
+float currentWidth = resolvedButtonWidths[pair.Key];
+float adjustable = Math.Max(0f, currentWidth - minButtonWidth);
+float reduction = adjustable / adjustableTotal * excess;
+resolvedButtonWidths[pair.Key] = Math.Max(minButtonWidth, currentWidth - reduction);
+}
 }
 }
 
-float startX = totalWidth < rowWidth ? (rowWidth - totalWidth) * 0.5f : 0f;
-float x = startX;
+float x = 0f;
 foreach (UIElement element in children)
 {
+float width = element.GetOuterDimensions().Width;
+float height = element.GetOuterDimensions().Height;
+
+if (element == _npcHeadButton)
+{
+width = npcHeadWidth;
+height = npcHeadHeight;
+element.Width.Set(width, 0f);
+element.Height.Set(height, 0f);
+}
+else if (resolvedButtonWidths.TryGetValue(element, out float buttonWidth))
+{
+width = buttonWidth;
+height = Scale(FilterButtonHeightPixels);
+element.Width.Set(width, 0f);
+element.Height.Set(height, 0f);
+}
+
 element.Left.Set(x, 0f);
-element.Top.Set(0f, 0f);
+element.Top.Set((row.GetInnerDimensions().Height - height) * 0.5f, 0f);
 element.Recalculate();
-x += element.GetOuterDimensions().Width + spacing;
+x += width + spacing;
 }
 }
 
