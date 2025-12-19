@@ -270,15 +270,15 @@ controlsBar.Append(filterBar);
 
 var categoryRow = CreateFilterRow();
 var categoryLabel = CreateFilterLabel("Category:", 80f);
-categoryRow.Add(categoryLabel);
+categoryRow.Append(categoryLabel);
 
 _categoryButton = CreateFilterButton(_selectedCategory, 170f);
 _categoryButton.OnLeftClick += (_, _) => CycleCategory();
 AddTooltip(_categoryButton, "Cycle expedition categories");
-categoryRow.Add(_categoryButton);
+categoryRow.Append(_categoryButton);
 
 var npcLabel = CreateFilterLabel("NPC:", 45f);
-categoryRow.Add(npcLabel);
+categoryRow.Append(npcLabel);
 
 _npcHeadButton = new UIImage(TextureAssets.MagicPixel)
 {
@@ -291,72 +291,85 @@ _npcHeadButton.Width.Set(Scale(36f), 0f);
 _npcHeadButton.Height.Set(Scale(36f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
 AddTooltip(_npcHeadButton, "Cycle NPC head filter");
-categoryRow.Add(_npcHeadButton);
+categoryRow.Append(_npcHeadButton);
 filterBar.Add(categoryRow);
+LayoutRow(categoryRow, categoryLabel, _categoryButton, npcLabel, _npcHeadButton);
 
 var availabilityRow = CreateFilterRow();
 _completionButton = CreateFilterButton(_completionFilter.ToString(), 150f);
 _completionButton.OnLeftClick += (_, _) => CycleCompletionFilter();
 AddTooltip(_completionButton, "Filter by availability/active/completed");
-availabilityRow.Add(_completionButton);
+availabilityRow.Append(_completionButton);
 
 _repeatableButton = CreateFilterButton("Repeatable: Any", 170f);
 _repeatableButton.OnLeftClick += (_, _) => ToggleRepeatable();
 AddTooltip(_repeatableButton, "Toggle showing only repeatable expeditions");
-availabilityRow.Add(_repeatableButton);
+availabilityRow.Append(_repeatableButton);
 filterBar.Add(availabilityRow);
+LayoutRow(availabilityRow, _completionButton, _repeatableButton);
 
 var trackingRow = CreateFilterRow();
 _trackedFilterButton = CreateFilterButton("Tracked: Any", 150f);
 _trackedFilterButton.OnLeftClick += (_, _) => ToggleTrackedFilter();
 AddTooltip(_trackedFilterButton, "Toggle showing only tracked expedition");
-trackingRow.Add(_trackedFilterButton);
+trackingRow.Append(_trackedFilterButton);
 
 var sortLabel = CreateFilterLabel("Sort:", 40f);
-trackingRow.Add(sortLabel);
+trackingRow.Append(sortLabel);
 
 _sortButton = CreateFilterButton(_sortMode.ToString(), 150f);
 _sortButton.OnLeftClick += (_, _) => CycleSortMode();
 AddTooltip(_sortButton, "Cycle sorting mode");
-trackingRow.Add(_sortButton);
+trackingRow.Append(_sortButton);
 
 _sortDirectionButton = CreateFilterButton(_sortAscending ? "Ascending" : "Descending", 150f);
 _sortDirectionButton.OnLeftClick += (_, _) => ToggleSortDirection();
 AddTooltip(_sortDirectionButton, "Toggle ascending/descending");
-trackingRow.Add(_sortDirectionButton);
+trackingRow.Append(_sortDirectionButton);
 filterBar.Add(trackingRow);
+LayoutRow(trackingRow, _trackedFilterButton, sortLabel, _sortButton, _sortDirectionButton);
 }
 
-private UIList CreateFilterRow()
+private UIElement CreateFilterRow()
 {
-var row = new HorizontalFilterRow
+var row = new UIElement
 {
 Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(Scale(FilterRowHeightPixels)),
-ListPadding = Scale(FilterButtonPaddingPixels)
+Height = StyleDimension.FromPixels(Scale(FilterRowHeightPixels))
 };
 
 row.SetPadding(0f);
-// Preserve the order controls are added to keep filter grouping consistent.
-row.ManualSortMethod = _ => { };
 return row;
 }
 
-private sealed class HorizontalFilterRow : UIList
+private void LayoutRow(UIElement row, params UIElement[] children)
 {
-public override void RecalculateChildren()
-{
-base.RecalculateChildren();
+// Use a bounded layout for filter rows since UIList does not support horizontal flow.
+// Center within the row when space allows, otherwise left-align to avoid clipping.
+float spacing = Scale(FilterButtonPaddingPixels);
+row.Recalculate();
+float rowWidth = row.GetInnerDimensions().Width;
 
-// Reflow elements horizontally to avoid manual positioning and keep spacing stable as the UI scales.
-float x = 0f;
-foreach (UIElement element in _items)
+float totalWidth = 0f;
+for (int i = 0; i < children.Length; i++)
+{
+UIElement element = children[i];
+element.Recalculate();
+totalWidth += element.GetOuterDimensions().Width;
+if (i < children.Length - 1)
+{
+totalWidth += spacing;
+}
+}
+
+float startX = totalWidth < rowWidth ? (rowWidth - totalWidth) * 0.5f : 0f;
+float x = startX;
+foreach (UIElement element in children)
 {
 element.Left.Set(x, 0f);
 element.Top.Set(0f, 0f);
 element.Recalculate();
-x += element.GetOuterDimensions().Width + ListPadding;
-}
+x += element.GetOuterDimensions().Width + spacing;
 }
 }
 
