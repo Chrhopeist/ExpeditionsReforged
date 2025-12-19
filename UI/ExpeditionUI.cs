@@ -64,54 +64,19 @@ private bool _sortAscending = true;
 private bool _needsPopulate = true;
 private bool _wasPlayerOpen;
 private UITextPanel<string> _closeButton = null!;
+private float _uiScale = 1f;
+
+private const float BaseScreenHeight = 1080f;
+private const float MinUiScale = 0.85f;
+private const float MaxUiScale = 1f;
 
 public override void OnInitialize()
 {
 // UIState instances are constructed during mod loading when no players exist; keep any
 // LocalPlayer/ModPlayer access out of OnInitialize and wire only visual structure here.
-_rootPanel = new UIPanel
-{
-BackgroundColor = new Color(34, 40, 52),
-BorderColor = new Color(69, 82, 110)
-};
-
-_rootPanel.SetPadding(12f);
-// Match Terraria's inventory footprint: centered, fixed pixel size with safe max bounds.
-_rootPanel.HAlign = 0.5f;
-_rootPanel.VAlign = 0.5f;
-_rootPanel.Width = StyleDimension.FromPixels(900f);
-_rootPanel.Height = StyleDimension.FromPixels(600f);
-_rootPanel.MaxWidth = StyleDimension.FromPixels(1100f);
-_rootPanel.MaxHeight = StyleDimension.FromPixels(720f);
-
-// Client-only close control anchored to the top-right of the root panel.
-_closeButton = new UITextPanel<string>("X", 0.9f, true)
-{
-HAlign = 1f,
-VAlign = 0f,
-Width = StyleDimension.FromPixels(32f),
-Height = StyleDimension.FromPixels(32f),
-BackgroundColor = new Color(60, 60, 60),
-BorderColor = new Color(110, 140, 220),
-TextColor = Color.White
-};
-
-_closeButton.Left.Set(-42f, 1f);
-_closeButton.Top.Set(10f, 0f);
-_closeButton.OnLeftClick += (_, _) =>
-{
-// UI is client-only; closing it should not mutate gameplay state or send packets.
-ExpeditionsPlayer? player = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
-if (player != null)
-{
-player.ExpeditionUIOpen = false;
-}
-};
-
-AddTooltip(_closeButton, "Close");
-
+UpdateUiScale();
+InitializeRootPanel();
 Append(_rootPanel);
-
 BuildLayout();
 
 // Defer population until a player exists; OnInitialize runs during mod load when no LocalPlayer is present.
@@ -127,17 +92,88 @@ _expeditionScrollbar.ViewPosition -= evt.ScrollWheelValue * 0.2f;
 }
 }
 
+private void InitializeRootPanel()
+{
+_rootPanel = new UIPanel
+{
+BackgroundColor = new Color(34, 40, 52),
+BorderColor = new Color(69, 82, 110)
+};
+
+_rootPanel.SetPadding(Scale(12f));
+// Match Terraria's inventory footprint: centered, fixed pixel size with safe max bounds.
+_rootPanel.HAlign = 0.5f;
+_rootPanel.VAlign = 0.5f;
+_rootPanel.Width = StyleDimension.FromPixels(Scale(900f));
+_rootPanel.Height = StyleDimension.FromPixels(Scale(600f));
+_rootPanel.MaxWidth = StyleDimension.FromPixels(Scale(1100f));
+_rootPanel.MaxHeight = StyleDimension.FromPixels(Scale(720f));
+
+// Client-only close control anchored to the top-right of the root panel.
+_closeButton = new UITextPanel<string>("X", 0.9f * _uiScale, true)
+{
+HAlign = 1f,
+VAlign = 0f,
+Width = StyleDimension.FromPixels(Scale(32f)),
+Height = StyleDimension.FromPixels(Scale(32f)),
+BackgroundColor = new Color(60, 60, 60),
+BorderColor = new Color(110, 140, 220),
+TextColor = Color.White
+};
+
+_closeButton.Left.Set(-Scale(42f), 1f);
+_closeButton.Top.Set(Scale(10f), 0f);
+_closeButton.OnLeftClick += (_, _) =>
+{
+// UI is client-only; closing it should not mutate gameplay state or send packets.
+ExpeditionsPlayer? player = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
+if (player != null)
+{
+player.ExpeditionUIOpen = false;
+}
+};
+
+AddTooltip(_closeButton, "Close");
+}
+
+private bool UpdateUiScale()
+{
+// Scale the UI based on resolution while clamping to avoid oversized layouts on high-res displays.
+float scale = MathHelper.Clamp(Main.screenHeight / BaseScreenHeight, MinUiScale, MaxUiScale);
+if (Math.Abs(scale - _uiScale) < 0.001f)
+{
+return false;
+}
+
+_uiScale = scale;
+return true;
+}
+
+private void RebuildLayoutForScale()
+{
+if (_rootPanel.Parent != null)
+{
+RemoveChild(_rootPanel);
+}
+
+InitializeRootPanel();
+Append(_rootPanel);
+BuildLayout();
+RequestExpeditionListRefresh();
+}
+
+private float Scale(float value) => value * _uiScale;
+
 private void BuildLayout()
 {
 _entries.Clear();
-_selectedExpeditionId = string.Empty;
 
 const float listWidthPercent = 0.45f;
 
 var controlsBar = new UIElement
 {
 Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(86f)
+Height = StyleDimension.FromPixels(Scale(86f))
 };
 
 BuildControls(controlsBar);
@@ -146,20 +182,20 @@ controlsBar.Append(_closeButton);
 
 _bodyContainer = new UIElement
 {
-Top = StyleDimension.FromPixels(90f),
+Top = StyleDimension.FromPixels(Scale(90f)),
 Width = StyleDimension.FromPercent(1f),
-Height = new StyleDimension(-90f, 1f)
+Height = new StyleDimension(-Scale(90f), 1f)
 };
 
 var listContainer = new UIElement
 {
-Width = new StyleDimension(-8f, listWidthPercent),
+Width = new StyleDimension(-Scale(8f), listWidthPercent),
 Height = StyleDimension.FromPercent(1f)
 };
 
 _expeditionList = new UIList
 {
-ListPadding = 6f,
+ListPadding = Scale(6f),
 Width = StyleDimension.FromPercent(1f),
 Height = StyleDimension.FromPercent(1f)
 };
@@ -170,12 +206,12 @@ HAlign = 1f
 };
 
 _expeditionScrollbar.Height = StyleDimension.FromPercent(1f);
-_expeditionScrollbar.SetView(100f, 1000f);
+_expeditionScrollbar.SetView(Scale(100f), Scale(1000f));
 _expeditionList.SetScrollbar(_expeditionScrollbar);
 
-_rarityMarkers = new RarityScrollbarMarkers();
-_rarityMarkers.Left.Set(-6f, 1f);
-_rarityMarkers.Width.Set(6f, 0f);
+_rarityMarkers = new RarityScrollbarMarkers(_uiScale);
+_rarityMarkers.Left.Set(-Scale(6f), 1f);
+_rarityMarkers.Width.Set(Scale(6f), 0f);
 _rarityMarkers.Height.Set(0f, 1f);
 
 PopulateCategories();
@@ -187,14 +223,14 @@ listContainer.Append(_rarityMarkers);
 
 _detailsPanel = new UIPanel
 {
-Left = new StyleDimension(8f, listWidthPercent),
-Width = new StyleDimension(-8f, 1f - listWidthPercent),
+Left = new StyleDimension(Scale(8f), listWidthPercent),
+Width = new StyleDimension(-Scale(8f), 1f - listWidthPercent),
 Height = StyleDimension.FromPercent(1f),
 BackgroundColor = new Color(40, 46, 60),
 BorderColor = new Color(69, 82, 110)
 };
 
-_detailsPanel.SetPadding(12f);
+_detailsPanel.SetPadding(Scale(12f));
 
 BuildDetailsPanel();
 
@@ -209,7 +245,7 @@ private void BuildControls(UIElement controlsBar)
 {
 float x = 0f;
 
-var categoryLabel = new UIText("Category:", 0.9f)
+var categoryLabel = new UIText("Category:", 0.9f * _uiScale)
 {
 HAlign = 0f,
 VAlign = 0.5f
@@ -219,63 +255,63 @@ categoryLabel.Left.Set(x, 0f);
 categoryLabel.Top.Set(0f, 0f);
 controlsBar.Append(categoryLabel);
 
-x += 80f;
+x += Scale(80f);
 
-_categoryButton = new UITextPanel<string>(_selectedCategory, 0.9f, true)
+_categoryButton = new UITextPanel<string>(_selectedCategory, 0.9f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f
 };
 
 _categoryButton.Left.Set(x, 0f);
-_categoryButton.Top.Set(12f, 0f);
+_categoryButton.Top.Set(Scale(12f), 0f);
 _categoryButton.OnLeftClick += (_, _) => CycleCategory();
 AddTooltip(_categoryButton, "Cycle expedition categories");
 controlsBar.Append(_categoryButton);
 
-x += 140f;
+x += Scale(140f);
 
-_completionButton = new UITextPanel<string>(_completionFilter.ToString(), 0.9f, true)
+_completionButton = new UITextPanel<string>(_completionFilter.ToString(), 0.9f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f
 };
 
 _completionButton.Left.Set(x, 0f);
-_completionButton.Top.Set(12f, 0f);
+_completionButton.Top.Set(Scale(12f), 0f);
 _completionButton.OnLeftClick += (_, _) => CycleCompletionFilter();
 AddTooltip(_completionButton, "Filter by availability/active/completed");
 controlsBar.Append(_completionButton);
 
-x += 160f;
+x += Scale(160f);
 
-_repeatableButton = new UITextPanel<string>("Repeatable: Any", 0.9f, true)
+_repeatableButton = new UITextPanel<string>("Repeatable: Any", 0.9f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f
 };
 
 _repeatableButton.Left.Set(x, 0f);
-_repeatableButton.Top.Set(12f, 0f);
+_repeatableButton.Top.Set(Scale(12f), 0f);
 _repeatableButton.OnLeftClick += (_, _) => ToggleRepeatable();
 AddTooltip(_repeatableButton, "Toggle showing only repeatable expeditions");
 controlsBar.Append(_repeatableButton);
 
-x += 170f;
+x += Scale(170f);
 
-_trackedFilterButton = new UITextPanel<string>("Tracked: Any", 0.9f, true)
+_trackedFilterButton = new UITextPanel<string>("Tracked: Any", 0.9f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f
 };
 
 _trackedFilterButton.Left.Set(x, 0f);
-_trackedFilterButton.Top.Set(12f, 0f);
+_trackedFilterButton.Top.Set(Scale(12f), 0f);
 _trackedFilterButton.OnLeftClick += (_, _) => ToggleTrackedFilter();
 AddTooltip(_trackedFilterButton, "Toggle showing only tracked expedition");
 controlsBar.Append(_trackedFilterButton);
 
-x += 170f;
+x += Scale(170f);
 
 _npcHeadButton = new UIImage(TextureAssets.MagicPixel)
 {
@@ -285,16 +321,16 @@ Color = Color.Gray
 };
 
 _npcHeadButton.Left.Set(x, 0f);
-_npcHeadButton.Top.Set(10f, 0f);
-_npcHeadButton.Width.Set(48f, 0f);
-_npcHeadButton.Height.Set(48f, 0f);
+_npcHeadButton.Top.Set(Scale(10f), 0f);
+_npcHeadButton.Width.Set(Scale(48f), 0f);
+_npcHeadButton.Height.Set(Scale(48f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
 AddTooltip(_npcHeadButton, "Cycle NPC head filter");
 controlsBar.Append(_npcHeadButton);
 
-x += 80f;
+x += Scale(80f);
 
-var sortLabel = new UIText("Sort:", 0.9f)
+var sortLabel = new UIText("Sort:", 0.9f * _uiScale)
 {
 HAlign = 0f,
 VAlign = 0.5f
@@ -304,30 +340,30 @@ sortLabel.Left.Set(x, 0f);
 sortLabel.Top.Set(0f, 0f);
 controlsBar.Append(sortLabel);
 
-x += 50f;
+x += Scale(50f);
 
-_sortButton = new UITextPanel<string>(_sortMode.ToString(), 0.9f, true)
+_sortButton = new UITextPanel<string>(_sortMode.ToString(), 0.9f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f
 };
 
 _sortButton.Left.Set(x, 0f);
-_sortButton.Top.Set(12f, 0f);
+_sortButton.Top.Set(Scale(12f), 0f);
 _sortButton.OnLeftClick += (_, _) => CycleSortMode();
 AddTooltip(_sortButton, "Cycle sorting mode");
 controlsBar.Append(_sortButton);
 
-x += 150f;
+x += Scale(150f);
 
-_sortDirectionButton = new UITextPanel<string>(_sortAscending ? "Ascending" : "Descending", 0.9f, true)
+_sortDirectionButton = new UITextPanel<string>(_sortAscending ? "Ascending" : "Descending", 0.9f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f
 };
 
 _sortDirectionButton.Left.Set(x, 0f);
-_sortDirectionButton.Top.Set(12f, 0f);
+_sortDirectionButton.Top.Set(Scale(12f), 0f);
 _sortDirectionButton.OnLeftClick += (_, _) => ToggleSortDirection();
 AddTooltip(_sortDirectionButton, "Toggle ascending/descending");
 controlsBar.Append(_sortDirectionButton);
@@ -336,6 +372,10 @@ controlsBar.Append(_sortDirectionButton);
 public override void OnActivate()
 {
 base.OnActivate();
+if (UpdateUiScale())
+{
+RebuildLayoutForScale();
+}
 _needsPopulate = true;
 }
 
@@ -462,10 +502,10 @@ _detailsList = new UIList
 {
 Width = StyleDimension.FromPercent(1f),
 Height = StyleDimension.FromPercent(1f),
-ListPadding = 8f
+ListPadding = Scale(8f)
 };
 
-_detailsPlaceholder = new UIText("Select an expedition to view its details.")
+_detailsPlaceholder = new UIText("Select an expedition to view its details.", 0.9f * _uiScale)
 {
 HAlign = 0f,
 VAlign = 0f
@@ -533,13 +573,13 @@ _detailsList.Clear();
 var player = TryGetActivePlayer(out ExpeditionsPlayer? activePlayer) ? activePlayer : null;
 ExpeditionProgress? progress = player?.ExpeditionProgressEntries.FirstOrDefault(progressEntry => progressEntry.ExpeditionId == definition.Id);
 
-_detailsList.Add(new UIText(definition.DisplayName, 0.95f, true));
-_detailsList.Add(new UIText(definition.Description, 0.85f));
-_detailsList.Add(new UIText($"Category: {definition.CategoryName}", 0.85f));
-_detailsList.Add(new UIText($"Duration: {FormatDuration(definition.DurationTicks)}", 0.85f));
-_detailsList.Add(new UIText($"Difficulty: {definition.Difficulty}", 0.85f));
-_detailsList.Add(new UIText($"Minimum Level: {definition.MinPlayerLevel}", 0.85f));
-_detailsList.Add(new UIText(definition.IsRepeatable ? "Repeatable: Yes" : "Repeatable: No", 0.85f));
+_detailsList.Add(new UIText(definition.DisplayName, 0.95f * _uiScale, true));
+_detailsList.Add(new UIText(definition.Description, 0.85f * _uiScale));
+_detailsList.Add(new UIText($"Category: {definition.CategoryName}", 0.85f * _uiScale));
+_detailsList.Add(new UIText($"Duration: {FormatDuration(definition.DurationTicks)}", 0.85f * _uiScale));
+_detailsList.Add(new UIText($"Difficulty: {definition.Difficulty}", 0.85f * _uiScale));
+_detailsList.Add(new UIText($"Minimum Level: {definition.MinPlayerLevel}", 0.85f * _uiScale));
+_detailsList.Add(new UIText(definition.IsRepeatable ? "Repeatable: Yes" : "Repeatable: No", 0.85f * _uiScale));
 
 var statusText = progress switch
 {
@@ -549,18 +589,18 @@ null => "Status: Not started",
 _ => "Status: Available"
 };
 
-_detailsList.Add(new UIText(statusText, 0.85f));
+_detailsList.Add(new UIText(statusText, 0.85f * _uiScale));
 
 AddSectionHeading("Prerequisites");
 if (definition.Prerequisites.Count == 0)
 {
-_detailsList.Add(new UIText("• None", 0.8f));
+_detailsList.Add(new UIText("• None", 0.8f * _uiScale));
 }
 else
 {
 foreach (var prerequisite in definition.Prerequisites)
 {
-var row = new UIText($"• {FormatCondition(prerequisite)}", 0.8f);
+var row = new UIText($"• {FormatCondition(prerequisite)}", 0.8f * _uiScale);
 AddTooltip(row, prerequisite.Description);
 _detailsList.Add(row);
 }
@@ -569,7 +609,7 @@ _detailsList.Add(row);
 AddSectionHeading("Deliverables");
 if (definition.Deliverables.Count == 0)
 {
-_detailsList.Add(new UIText("• None", 0.8f));
+_detailsList.Add(new UIText("• None", 0.8f * _uiScale));
 }
 else
 {
@@ -583,13 +623,13 @@ _detailsList.Add(CreateProgressRow(FormatDeliverable(deliverable), value, delive
 AddSectionHeading("Rewards");
 if (definition.Rewards.Count == 0)
 {
-_detailsList.Add(new UIText("• None", 0.8f));
+_detailsList.Add(new UIText("• None", 0.8f * _uiScale));
 }
 else
 {
 foreach (var reward in definition.Rewards)
 {
-_detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f));
+_detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f * _uiScale));
 }
 }
 
@@ -598,14 +638,14 @@ if (definition.DailyRewards.Count > 0)
 AddSectionHeading("Daily Bonus Rewards");
 foreach (var reward in definition.DailyRewards)
 {
-_detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f));
+_detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f * _uiScale));
 }
 }
 
 var buttonRow = new UIElement
 {
     Width = StyleDimension.FromPercent(1f),
-    Height = StyleDimension.FromPixels(36f)
+    Height = StyleDimension.FromPixels(Scale(36f))
 };
 
 
@@ -644,7 +684,7 @@ var claimButton = CreateActionButton("Claim", canClaim, () =>
     activePlayer?.TryClaimRewards(definition.Id);
     RequestExpeditionListRefresh();
 });
-claimButton.Left.Set(140f, 0f);
+claimButton.Left.Set(Scale(140f), 0f);
 buttonRow.Append(claimButton);
 
 var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", activePlayer != null, () =>
@@ -652,7 +692,7 @@ var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", activePlay
     activePlayer?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
     RequestExpeditionListRefresh();
 });
-trackButton.Left.Set(280f, 0f);
+trackButton.Left.Set(Scale(280f), 0f);
 buttonRow.Append(trackButton);
 
 _detailsList.Add(buttonRow);
@@ -905,10 +945,10 @@ return new ExpeditionView(definition.Id, definition.DisplayName, definition.Cate
 
 private UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)
 {
-var button = new UITextPanel<string>(label, 0.85f, true)
+var button = new UITextPanel<string>(label, 0.85f * _uiScale, true)
 {
-Width = StyleDimension.FromPixels(130f),
-Height = StyleDimension.FromPixels(32f),
+Width = StyleDimension.FromPixels(Scale(130f)),
+Height = StyleDimension.FromPixels(Scale(32f)),
 BackgroundColor = enabled ? new Color(80, 104, 192) : new Color(60, 60, 60),
 BorderColor = enabled ? new Color(110, 140, 220) : new Color(90, 90, 90),
 TextColor = enabled ? Color.White : Color.Gray
@@ -927,10 +967,10 @@ private UIElement CreateProgressRow(string label, int current, int required)
 var row = new UIElement
 {
 Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(40f)
+Height = StyleDimension.FromPixels(Scale(40f))
 };
 
-var text = new UIText(label, 0.8f)
+var text = new UIText(label, 0.8f * _uiScale)
 {
 HAlign = 0f,
 VAlign = 0f
@@ -938,7 +978,7 @@ VAlign = 0f
 
 row.Append(text);
 
-var progressText = new UIText($"{current}/{required}", 0.8f)
+var progressText = new UIText($"{current}/{required}", 0.8f * _uiScale)
 {
 HAlign = 1f,
 VAlign = 0f
@@ -949,9 +989,9 @@ row.Append(progressText);
 float fraction = required > 0 ? Math.Clamp(current / (float)required, 0f, 1f) : 0f;
 var bar = new SegmentedProgressBar
 {
-Top = StyleDimension.FromPixels(22f),
+Top = StyleDimension.FromPixels(Scale(22f)),
 Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(12f)
+Height = StyleDimension.FromPixels(Scale(12f))
 };
 
 bar.SetProgress(fraction);
@@ -962,7 +1002,7 @@ return row;
 
 private void AddSectionHeading(string text)
 {
-_detailsList.Add(new UIText(text, 0.85f, true)
+_detailsList.Add(new UIText(text, 0.85f * _uiScale, true)
 {
 TextColor = new Color(200, 210, 230)
 });
@@ -990,6 +1030,12 @@ _ => new Color(200, 200, 200)
 private class RarityScrollbarMarkers : UIElement
 {
 private readonly List<(float position, Color color)> _markers = new();
+private readonly float _markerScale;
+
+public RarityScrollbarMarkers(float uiScale)
+{
+_markerScale = uiScale;
+}
 
 public void SetEntries(List<(ExpeditionView view, float height)> entries)
 {
@@ -1017,7 +1063,8 @@ var dim = GetDimensions();
 foreach (var (position, color) in _markers)
 {
 float y = dim.Y + position * dim.Height;
-spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dim.X, (int)y, (int)dim.Width, 3), color * 0.9f);
+int markerHeight = Math.Max(1, (int)MathF.Round(3f * _markerScale));
+spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dim.X, (int)y, (int)dim.Width, markerHeight), color * 0.9f);
 }
 }
 }
@@ -1042,47 +1089,47 @@ _owner = owner;
 View = view;
 ExpeditionId = view.Id;
 
-Height = StyleDimension.FromPixels(72f);
+Height = StyleDimension.FromPixels(owner.Scale(72f));
 Width = StyleDimension.FromPercent(1f);
-PaddingTop = 6f;
-PaddingBottom = 6f;
+PaddingTop = owner.Scale(6f);
+PaddingBottom = owner.Scale(6f);
 BackgroundColor = _defaultBackground;
 BorderColor = new Color(80, 104, 192);
 
 int headIndex = Math.Clamp(view.NpcHeadId, 0, TextureAssets.NpcHead.Length - 1);
 _npcHead = new UIImage(TextureAssets.NpcHead[headIndex]);
-_npcHead.Left.Set(-54f, 1f);
-_npcHead.Top.Set(4f, 0f);
-_npcHead.Width.Set(44f, 0f);
-_npcHead.Height.Set(44f, 0f);
+_npcHead.Left.Set(-owner.Scale(54f), 1f);
+_npcHead.Top.Set(owner.Scale(4f), 0f);
+_npcHead.Width.Set(owner.Scale(44f), 0f);
+_npcHead.Height.Set(owner.Scale(44f), 0f);
 Append(_npcHead);
 
-_label = new UIText(view.DisplayName)
+_label = new UIText(view.DisplayName, 0.9f * owner._uiScale)
 {
 HAlign = 0f,
 VAlign = 0f
 };
 
-_categoryText = new UIText($"Category: {view.Category}", 0.75f)
+_categoryText = new UIText($"Category: {view.Category}", 0.75f * owner._uiScale)
 {
 HAlign = 0f,
-Top = new StyleDimension(22f, 0f)
+Top = new StyleDimension(owner.Scale(22f), 0f)
 };
 
 string statusLabel = view.IsAvailable ? $"Status: {view.Status}" : "Status: Unavailable";
-_statusText = new UIText(statusLabel, 0.75f)
+_statusText = new UIText(statusLabel, 0.75f * owner._uiScale)
 {
 HAlign = 0f,
-Top = new StyleDimension(40f, 0f),
+Top = new StyleDimension(owner.Scale(40f), 0f),
 TextColor = view.IsAvailable ? Color.White : Color.LightGray
 };
 
 _progressBar = new SegmentedProgressBar
 {
-Top = StyleDimension.FromPixels(48f),
+Top = StyleDimension.FromPixels(owner.Scale(48f)),
 Left = StyleDimension.FromPixels(0f),
-Width = new StyleDimension(-60f, 1f),
-Height = StyleDimension.FromPixels(10f)
+Width = new StyleDimension(-owner.Scale(60f), 1f),
+Height = StyleDimension.FromPixels(owner.Scale(10f))
 };
 
 _progressBar.SetProgress(view.ProgressFraction);
