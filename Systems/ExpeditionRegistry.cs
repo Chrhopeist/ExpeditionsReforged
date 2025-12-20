@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Content.Expeditions.Json;
+using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
