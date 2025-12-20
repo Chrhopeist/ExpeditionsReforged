@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using Terraria;
 using Terraria.ID;
@@ -120,8 +121,12 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
 
                 try
                 {
+                    ValidateRequiredText(dto.DisplayNameKey, "DisplayNameKey", dto.Id, mod);
+                    ValidateRequiredText(dto.DescriptionKey, "DescriptionKey", dto.Id, mod);
+                    ValidateRequiredText(dto.Category, "Category", dto.Id, mod);
+
                     ExpeditionCategory category = ParseCategory(dto.Category, dto.Id, mod);
-                    int minPlayerLevel = ParseProgressionTier(dto.MinProgressionTier, dto.Id, mod);
+                    int minPlayerLevel = ParseProgressionTier(ResolveProgressionTier(dto), dto.Id, mod);
 
                     var prerequisites = (dto.Prerequisites ?? new List<ConditionDefinitionDto>())
                         .Select(condition => new ConditionDefinition(condition.Id, condition.RequiredCount, condition.Description))
@@ -212,6 +217,29 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
 
             return minPlayerLevel;
+        }
+
+        private static string ResolveProgressionTier(ExpeditionDefinitionDto dto)
+        {
+            if (!string.IsNullOrWhiteSpace(dto.MinProgressionTier))
+            {
+                return dto.MinProgressionTier;
+            }
+
+            if (dto.MinPlayerLevel.HasValue && dto.MinPlayerLevel.Value > 0)
+            {
+                return dto.MinPlayerLevel.Value.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return string.Empty;
+        }
+
+        private static void ValidateRequiredText(string value, string fieldName, string expeditionId, Mod mod)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                ThrowLoggedError(mod, $"Expedition '{expeditionId}' is missing required field '{fieldName}'.", new InvalidDataException($"Missing required field '{fieldName}'."));
+            }
         }
 
         private static string GetExpeditionJsonPath(Mod mod)
