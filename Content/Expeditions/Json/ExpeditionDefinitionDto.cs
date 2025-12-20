@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace ExpeditionsReforged.Content.Expeditions.Json
 {
@@ -46,6 +47,12 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         /// Minimum player progression tier required to start the expedition.
         /// </summary>
         public string MinProgressionTier { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Legacy integer minimum player level field kept for backward-compatible JSON imports.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? MinPlayerLevel { get; set; }
 
         /// <summary>
         /// Indicates whether the expedition can be repeated after completion.
