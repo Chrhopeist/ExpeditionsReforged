@@ -239,6 +239,12 @@ namespace ExpeditionsReforged.Players
                 return;
             }
 
+            if (newPlayer)
+            {
+                // Send the authoritative expedition definitions to the joining client before syncing player progress.
+                ExpeditionsReforged.SendDefinitionSync(toWho);
+            }
+
             ModPacket packet = Mod.GetPacket();
             packet.Write((byte)Systems.ExpeditionPacketType.SyncPlayer);
             packet.Write((byte)Player.whoAmI);
