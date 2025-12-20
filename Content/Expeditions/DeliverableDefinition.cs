@@ -8,7 +8,8 @@ namespace ExpeditionsReforged.Content.Expeditions
     public sealed class DeliverableDefinition
     {
         /// <summary>
-        /// Identifier for the deliverable; typically an ItemID or bespoke objective key.
+        /// Identifier for the deliverable; must be a string containing a numeric Terraria ItemID (for example, "23" for Gel).
+        /// Symbolic values like "ItemID.Gel" are intentionally unsupported for now.
         /// </summary>
         public string Id { get; }
 
@@ -37,9 +38,13 @@ namespace ExpeditionsReforged.Content.Expeditions
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("Deliverable definitions require an identifier.", nameof(id));
 
+            if (!int.TryParse(id, out int itemId) || itemId <= 0)
+                throw new ArgumentException("Deliverable identifiers must be numeric Terraria ItemIDs stored as strings.", nameof(id));
+
             if (requiredCount < 1)
                 throw new ArgumentOutOfRangeException(nameof(requiredCount), "Deliverable counts must be positive.");
 
+            // TODO: Allow non-numeric identifiers for mod items or custom objectives once loading is updated to support them safely.
             Id = id;
             RequiredCount = requiredCount;
             ConsumesItems = consumesItems;
