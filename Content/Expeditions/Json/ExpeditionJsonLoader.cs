@@ -41,7 +41,9 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
 
             if (!File.Exists(filePath))
             {
-                ThrowLoggedError(mod, $"Expedition JSON file not found at '{filePath}'.", new FileNotFoundException("Missing expeditions.json", filePath));
+                // Missing file should not hard-fail mod compilation; log and continue with no expeditions.
+                mod.Logger.Error($"Expedition JSON file not found at '{filePath}'.");
+                return Array.Empty<ExpeditionDefinitionDto>();
             }
 
             string json;
@@ -51,7 +53,16 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
             catch (Exception ex)
             {
-                ThrowLoggedError(mod, $"Failed to read expedition JSON from '{filePath}'.", ex);
+                // File IO can fail due to OS locks or permissions; log and continue with no expeditions.
+                mod.Logger.Error($"Failed to read expedition JSON from '{filePath}'.", ex);
+                return Array.Empty<ExpeditionDefinitionDto>();
+            }
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                // Empty payload is treated as invalid and yields no expeditions.
+                mod.Logger.Error($"Expedition JSON file '{filePath}' was empty.");
+                return Array.Empty<ExpeditionDefinitionDto>();
             }
 
             return DeserializeExpeditionDtos(json, filePath, mod);
@@ -212,23 +223,32 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
 
         private static IReadOnlyList<ExpeditionDefinitionDto> DeserializeExpeditionDtos(string json, string sourceLabel, Mod mod)
         {
-            if (json is null)
+            if (string.IsNullOrWhiteSpace(json))
             {
-                ThrowLoggedError(mod, $"Expedition JSON payload from '{sourceLabel}' was null.", new InvalidDataException("Expedition JSON payload cannot be null."));
+                // Invalid/empty payloads should not crash loading; log and return empty list instead.
+                mod.Logger.Error($"Expedition JSON payload from '{sourceLabel}' was empty.");
+                return Array.Empty<ExpeditionDefinitionDto>();
             }
 
             try
             {
-                return JsonSerializer.Deserialize<List<ExpeditionDefinitionDto>>(json, SerializerOptions)
-                    ?? throw new InvalidDataException("Expedition JSON deserialized to null.");
+                List<ExpeditionDefinitionDto>? deserialized = JsonSerializer.Deserialize<List<ExpeditionDefinitionDto>>(json, SerializerOptions);
+                if (deserialized is null)
+                {
+                    // Null deserialization indicates invalid JSON or schema mismatch.
+                    mod.Logger.Error($"Expedition JSON payload from '{sourceLabel}' deserialized to null.");
+                    return Array.Empty<ExpeditionDefinitionDto>();
+                }
+
+                return deserialized;
             }
             catch (JsonException ex)
             {
-                ThrowLoggedError(mod, $"Invalid expedition JSON in '{sourceLabel}'.", new InvalidDataException("Expedition JSON could not be parsed.", ex));
+                mod.Logger.Error($"Invalid expedition JSON in '{sourceLabel}'.", ex);
             }
             catch (Exception ex)
             {
-                ThrowLoggedError(mod, $"Unexpected error while parsing expedition JSON in '{sourceLabel}'.", ex);
+                mod.Logger.Error($"Unexpected error while parsing expedition JSON in '{sourceLabel}'.", ex);
             }
 
             return Array.Empty<ExpeditionDefinitionDto>();
