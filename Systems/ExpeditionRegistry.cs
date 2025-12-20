@@ -68,6 +68,8 @@ namespace ExpeditionsReforged.Systems
                 return;
             }
 
+            // Cache the server-provided JSON for inspection only; the server remains authoritative.
+            // This file is overwritten on each server join when the sync payload arrives.
             ExpeditionJsonLoader.WriteExpeditionJsonCache(json);
 
             try
