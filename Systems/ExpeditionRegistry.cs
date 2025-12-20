@@ -20,6 +20,7 @@ namespace ExpeditionsReforged.Systems
             new ReadOnlyDictionary<string, ExpeditionDefinition>(new Dictionary<string, ExpeditionDefinition>(StringComparer.Ordinal));
 
         private IReadOnlyCollection<ExpeditionDefinition> _definitionCollection = Array.Empty<ExpeditionDefinition>();
+        private IReadOnlyList<ExpeditionDefinitionDto> _definitionDtos = Array.Empty<ExpeditionDefinitionDto>();
 
         public IReadOnlyCollection<ExpeditionDefinition> Definitions => _definitionCollection;
 
@@ -31,19 +32,58 @@ namespace ExpeditionsReforged.Systems
             {
                 // Multiplayer clients receive expedition definitions from server sync to prevent mismatches.
                 Mod.Logger.Info("Expedition registry initialized in client mode; awaiting server sync.");
+                _definitionDtos = Array.Empty<ExpeditionDefinitionDto>();
                 return;
             }
 
-            IReadOnlyList<ExpeditionDefinition> definitions = ExpeditionJsonLoader.LoadExpeditions();
+            IReadOnlyList<ExpeditionDefinitionDto> dtos = ExpeditionJsonLoader.LoadExpeditionDtos();
+            _definitionDtos = dtos;
+            IReadOnlyList<ExpeditionDefinition> definitions = ExpeditionJsonLoader.BuildDefinitions(dtos);
             FinalizeDefinitions(definitions);
         }
 
         public override void Unload()
         {
             ClearDefinitions();
+            _definitionDtos = Array.Empty<ExpeditionDefinitionDto>();
         }
 
         public IReadOnlyCollection<ExpeditionDefinition> GetAll() => _definitionCollection;
+
+        /// <summary>
+        /// Serializes the currently loaded expedition DTOs for multiplayer sync.
+        /// </summary>
+        public string BuildDefinitionSyncJson()
+        {
+            return ExpeditionJsonLoader.SerializeExpeditionDtos(_definitionDtos);
+        }
+
+        /// <summary>
+        /// Applies a definition sync payload on multiplayer clients, rebuilding the registry from the JSON data.
+        /// </summary>
+        public void ApplyDefinitionSync(string json)
+        {
+            if (Main.netMode != NetmodeID.MultiplayerClient)
+            {
+                return;
+            }
+
+            ExpeditionJsonLoader.WriteExpeditionJsonCache(json);
+
+            try
+            {
+                IReadOnlyList<ExpeditionDefinitionDto> dtos = ExpeditionJsonLoader.DeserializeExpeditionDtos(json);
+                _definitionDtos = dtos;
+                IReadOnlyList<ExpeditionDefinition> definitions = ExpeditionJsonLoader.BuildDefinitions(dtos);
+                FinalizeDefinitions(definitions);
+            }
+            catch (Exception ex)
+            {
+                Mod.Logger.Error("Failed to apply expedition definition sync payload.", ex);
+                _definitionDtos = Array.Empty<ExpeditionDefinitionDto>();
+                ClearDefinitions();
+            }
+        }
 
         public bool TryGetExpedition(string expeditionId, out ExpeditionDefinition definition)
         {

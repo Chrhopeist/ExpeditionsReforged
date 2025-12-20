@@ -48,6 +48,16 @@ namespace ExpeditionsReforged
 
                     break;
 
+                case ExpeditionPacketType.SyncDefinitions:
+                    if (Main.netMode == NetmodeID.MultiplayerClient)
+                    {
+                        string json = reader.ReadString();
+                        ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+                        registry.ApplyDefinitionSync(json);
+                    }
+
+                    break;
+
                 case ExpeditionPacketType.StartExpedition:
                     if (Main.netMode == NetmodeID.Server)
                     {
@@ -147,6 +157,22 @@ namespace ExpeditionsReforged
             packet.Write((byte)forPlayer);
             expeditionsPlayer.WriteProgressToPacket(packet);
             packet.Send(toWho, forPlayer);
+        }
+
+        internal static void SendDefinitionSync(int toWho)
+        {
+            if (Main.netMode != NetmodeID.Server || Instance is null)
+            {
+                return;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            string json = registry.BuildDefinitionSyncJson();
+
+            ModPacket packet = Instance.GetPacket();
+            packet.Write((byte)ExpeditionPacketType.SyncDefinitions);
+            packet.Write(json ?? string.Empty);
+            packet.Send(toWho);
         }
 
         internal static void RequestTrack(string expeditionId)

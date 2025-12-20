@@ -25,11 +25,11 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         };
 
         /// <summary>
-        /// Loads expedition definitions from the mod save folder.
+        /// Loads expedition DTOs from the mod save folder.
         /// This method must not be invoked on multiplayer clients.
         /// </summary>
-        /// <returns>Read-only list of expedition definitions.</returns>
-        public static IReadOnlyList<ExpeditionDefinition> LoadExpeditions()
+        /// <returns>Read-only list of expedition DTOs.</returns>
+        public static IReadOnlyList<ExpeditionDefinitionDto> LoadExpeditionDtos()
         {
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
@@ -37,9 +37,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
 
             Mod mod = ModContent.GetInstance<ExpeditionsReforged>();
-            string saveFolder = Path.Combine(Main.SavePath, "ModLoader", mod.Name);
-            Directory.CreateDirectory(saveFolder);
-            string filePath = Path.Combine(saveFolder, ExpeditionsFileName);
+            string filePath = GetExpeditionJsonPath(mod);
 
             if (!File.Exists(filePath))
             {
@@ -56,21 +54,42 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
                 ThrowLoggedError(mod, $"Failed to read expedition JSON from '{filePath}'.", ex);
             }
 
-            List<ExpeditionDefinitionDto> dtos;
-            try
+            return DeserializeExpeditionDtos(json, filePath, mod);
+        }
+
+        /// <summary>
+        /// Serializes expedition DTOs to a JSON blob suitable for sync.
+        /// </summary>
+        public static string SerializeExpeditionDtos(IReadOnlyList<ExpeditionDefinitionDto> dtos)
+        {
+            if (dtos is null)
             {
-                dtos = JsonSerializer.Deserialize<List<ExpeditionDefinitionDto>>(json, SerializerOptions)
-                    ?? throw new InvalidDataException("Expedition JSON deserialized to null.");
-            }
-            catch (JsonException ex)
-            {
-                ThrowLoggedError(mod, $"Invalid expedition JSON in '{filePath}'.", new InvalidDataException("Expedition JSON could not be parsed.", ex));
-            }
-            catch (Exception ex)
-            {
-                ThrowLoggedError(mod, $"Unexpected error while parsing expedition JSON in '{filePath}'.", ex);
+                throw new ArgumentNullException(nameof(dtos));
             }
 
+            return JsonSerializer.Serialize(dtos, SerializerOptions);
+        }
+
+        /// <summary>
+        /// Deserializes expedition DTOs from a JSON payload.
+        /// </summary>
+        public static IReadOnlyList<ExpeditionDefinitionDto> DeserializeExpeditionDtos(string json)
+        {
+            Mod mod = ModContent.GetInstance<ExpeditionsReforged>();
+            return DeserializeExpeditionDtos(json, "expedition sync payload", mod);
+        }
+
+        /// <summary>
+        /// Builds expedition definitions from DTOs.
+        /// </summary>
+        public static IReadOnlyList<ExpeditionDefinition> BuildDefinitions(IReadOnlyList<ExpeditionDefinitionDto> dtos)
+        {
+            if (dtos is null)
+            {
+                throw new ArgumentNullException(nameof(dtos));
+            }
+
+            Mod mod = ModContent.GetInstance<ExpeditionsReforged>();
             var definitions = new List<ExpeditionDefinition>(dtos.Count);
             var seenIds = new HashSet<string>(StringComparer.Ordinal);
 
@@ -135,6 +154,25 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             return definitions.AsReadOnly();
         }
 
+        /// <summary>
+        /// Writes the expedition JSON payload to the local mod save folder, overwriting any existing cache.
+        /// </summary>
+        public static void WriteExpeditionJsonCache(string json)
+        {
+            Mod mod = ModContent.GetInstance<ExpeditionsReforged>();
+            string filePath = GetExpeditionJsonPath(mod);
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? string.Empty);
+                File.WriteAllText(filePath, json ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                mod.Logger.Error($"Failed to write expedition JSON cache to '{filePath}'.", ex);
+            }
+        }
+
         private static ExpeditionCategory ParseCategory(string categoryValue, string expeditionId, Mod mod)
         {
             if (!Enum.TryParse(categoryValue, true, out ExpeditionCategory category) ||
@@ -162,6 +200,37 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
 
             return minPlayerLevel;
+        }
+
+        private static string GetExpeditionJsonPath(Mod mod)
+        {
+            string saveFolder = Path.Combine(Main.SavePath, "ModLoader", mod.Name);
+            Directory.CreateDirectory(saveFolder);
+            return Path.Combine(saveFolder, ExpeditionsFileName);
+        }
+
+        private static IReadOnlyList<ExpeditionDefinitionDto> DeserializeExpeditionDtos(string json, string sourceLabel, Mod mod)
+        {
+            if (json is null)
+            {
+                ThrowLoggedError(mod, $"Expedition JSON payload from '{sourceLabel}' was null.", new InvalidDataException("Expedition JSON payload cannot be null."));
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<ExpeditionDefinitionDto>>(json, SerializerOptions)
+                    ?? throw new InvalidDataException("Expedition JSON deserialized to null.");
+            }
+            catch (JsonException ex)
+            {
+                ThrowLoggedError(mod, $"Invalid expedition JSON in '{sourceLabel}'.", new InvalidDataException("Expedition JSON could not be parsed.", ex));
+            }
+            catch (Exception ex)
+            {
+                ThrowLoggedError(mod, $"Unexpected error while parsing expedition JSON in '{sourceLabel}'.", ex);
+            }
+
+            return Array.Empty<ExpeditionDefinitionDto>();
         }
 
         [DoesNotReturn]
