@@ -155,7 +155,8 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         }
 
         /// <summary>
-        /// Writes the expedition JSON payload to the local mod save folder, overwriting any existing cache.
+        /// Writes the expedition JSON payload to the local mod save folder for inspection only,
+        /// overwriting any existing cache on each server join.
         /// </summary>
         public static void WriteExpeditionJsonCache(string json)
         {
