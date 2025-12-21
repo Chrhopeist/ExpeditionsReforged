@@ -1,0 +1,75 @@
+[
+  {
+    "id": "dummy",
+    "displayNameKey": "dummy",
+    "descriptionKey": "dummy",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 7200,
+    "difficulty": 1,
+    "minProgressionTier": "EarlyGame",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "npcHeadId": 38,
+    "prerequisites": [],
+    "deliverables": [],
+    "rewards": [],
+    "dailyRewards": []
+  },
+  {
+    "id": "slime_time",
+    "displayNameKey": "Slime Time",
+    "descriptionKey": "The slimes are taking over the town",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 7200,
+    "difficulty": 2,
+    "minProgressionTier": "PreHardmode",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "npcHeadId": 18,
+    "prerequisites": [
+      {
+        "id": "killnpc_slime",
+        "type": "KillNPC",
+        "target": "Slime",
+        "requiredCount": 5,
+        "description": "Slay 5 slimes"
+      }
+    ],
+    "deliverables": [
+      {
+        "id": 23,
+        "requiredCount": 5,
+        "consumesItems": false,
+        "description": "Bring me 5 gel - you can keep it"
+      }
+    ],
+    "rewards": [],
+    "dailyRewards": []
+  },
+  {
+    "id": "get_wood",
+    "displayNameKey": "Get Wood",
+    "descriptionKey": "I just really need that wood",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 7200,
+    "difficulty": 1,
+    "minProgressionTier": "EarlyGame",
+    "isRepeatable": false,
+    "isDailyEligible": false,
+    "npcHeadId": 18,
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": 9,
+        "requiredCount": 1,
+        "consumesItems": true,
+        "description": "Bring me 1 wood"
+      }
+    ],
+    "rewards": [],
+    "dailyRewards": []
+  }
+]
