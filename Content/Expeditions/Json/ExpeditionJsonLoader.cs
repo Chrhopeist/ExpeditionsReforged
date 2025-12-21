@@ -17,7 +17,8 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
     public static class ExpeditionJsonLoader
     {
         private const string ExpeditionsFileName = "expeditions.json";
-        private const string EmbeddedExpeditionsAssetPath = "Content/Expeditions/expeditions.json";
+        // Keep the embedded expedition JSON alongside the loader so it is bundled into mod content.
+        private const string EmbeddedExpeditionsAssetPath = "Content/Expeditions/Json/expeditions.json";
 
         private static readonly JsonSerializerOptions SerializerOptions = new()
         {
