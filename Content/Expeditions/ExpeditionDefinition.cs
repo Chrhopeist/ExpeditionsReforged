@@ -82,7 +82,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         public bool IsDailyEligible { get; }
 
         /// <summary>
-        /// The quest giver NPCID used to select the head icon for the expedition.
+        /// The quest giver NPCID that represents the NPC responsible for this expedition.
         /// </summary>
         public int QuestGiverNpcId { get; }
 
@@ -124,7 +124,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <param name="minPlayerLevel">Minimum player progression level required to start the expedition.</param>
         /// <param name="isRepeatable">Whether the expedition can be repeated after completion.</param>
         /// <param name="isDailyEligible">Whether the expedition can appear as a daily contract.</param>
-        /// <param name="questGiverNpcId">Quest giver NPCID used to select the head icon.</param>
+        /// <param name="questGiverNpcId">Quest giver NPCID that represents the expedition's quest giver.</param>
         /// <param name="prerequisites">Optional set of prerequisite conditions.</param>
         /// <param name="deliverables">Optional set of deliverables required to complete the expedition.</param>
         /// <param name="rewards">Reward list granted on completion.</param>
