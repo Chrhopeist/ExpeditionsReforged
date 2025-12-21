@@ -187,6 +187,8 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
                         .Select(reward => new RewardDefinition(reward.Id, reward.MinStack, reward.MaxStack, reward.DropChance))
                         .ToList();
 
+                    int questGiverNpcId = NormalizeQuestGiverNpcId(dto, expeditionId, mod);
+
                     definitions.Add(new ExpeditionDefinition(
                         id: dto.Id,
                         displayNameKey: dto.DisplayNameKey,
@@ -198,7 +200,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
                         minPlayerLevel: minPlayerLevel,
                         isRepeatable: dto.IsRepeatable,
                         isDailyEligible: dto.IsDailyEligible,
-                        questGiverNpcId: ResolveQuestGiverNpcId(dto),
+                        questGiverNpcId: questGiverNpcId,
                         prerequisites: prerequisites,
                         deliverables: deliverables,
                         rewards: rewards,
@@ -248,8 +250,25 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         }
 
         /// <summary>
-        /// Resolves the quest giver NPCID, preferring the new field while preserving legacy npcHeadId imports.
+        /// Resolves and normalizes the quest giver NPCID, preferring the new field while preserving legacy npcHeadId imports.
         /// </summary>
+        private static int NormalizeQuestGiverNpcId(
+            ExpeditionDefinitionDto dto,
+            string expeditionId,
+            Mod mod)
+        {
+            int questGiverNpcId = ResolveQuestGiverNpcId(dto);
+            if (questGiverNpcId < 0)
+            {
+                int fallbackNpcId = NPCID.Guide;
+                string message = $"Expedition '{expeditionId}' has invalid quest giver NPCID {questGiverNpcId}; defaulting to NPCID.Guide ({fallbackNpcId}).";
+                mod.Logger.Warn(message);
+                return fallbackNpcId;
+            }
+
+            return questGiverNpcId;
+        }
+
         private static int ResolveQuestGiverNpcId(ExpeditionDefinitionDto dto)
         {
             if (dto.QuestGiverNpcId != default)

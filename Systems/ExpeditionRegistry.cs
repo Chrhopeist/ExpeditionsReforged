@@ -6,7 +6,6 @@ using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Content.Expeditions.Json;
 using ExpeditionsReforged.Systems.Diagnostics;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -200,9 +199,12 @@ namespace ExpeditionsReforged.Systems
                     return FailValidation(definition.Id, $"Expedition '{definition.Id}' uses an undefined category '{definition.Category}'. The definition was skipped.");
                 }
 
-                if (definition.QuestGiverNpcId >= 0 && (definition.QuestGiverNpcId >= TextureAssets.NpcHead.Length))
+                int questGiverNpcId = definition.QuestGiverNpcId;
+                if (questGiverNpcId < 0)
                 {
-                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' references invalid quest giver NPCID {definition.QuestGiverNpcId}. The definition was skipped.");
+                    int fallbackNpcId = NPCID.Guide;
+                    Mod.Logger.Warn($"Expedition '{definition.Id}' has invalid quest giver NPCID {questGiverNpcId}; defaulting to NPCID.Guide ({fallbackNpcId}).");
+                    questGiverNpcId = fallbackNpcId;
                 }
 
                 if (definition.DurationTicks <= 0)
@@ -228,7 +230,9 @@ namespace ExpeditionsReforged.Systems
                 if (!ValidateCollections(definition))
                     return false;
 
-                validated = definition.Clone();
+                validated = questGiverNpcId == definition.QuestGiverNpcId
+                    ? definition.Clone()
+                    : CloneWithQuestGiverNpcId(definition, questGiverNpcId);
                 _loadDiagnostics?.RecordSuccess(validated.Id);
                 return true;
             }
@@ -274,6 +278,27 @@ namespace ExpeditionsReforged.Systems
             }
 
             return true;
+        }
+
+        private static ExpeditionDefinition CloneWithQuestGiverNpcId(ExpeditionDefinition source, int questGiverNpcId)
+        {
+            // Create a defensive copy with a corrected quest giver NPCID to avoid mutating shared definition data.
+            return new ExpeditionDefinition(
+                id: source.Id,
+                displayNameKey: source.DisplayNameKey,
+                descriptionKey: source.DescriptionKey,
+                category: source.Category,
+                rarity: source.Rarity,
+                durationTicks: source.DurationTicks,
+                difficulty: source.Difficulty,
+                minPlayerLevel: source.MinPlayerLevel,
+                isRepeatable: source.IsRepeatable,
+                isDailyEligible: source.IsDailyEligible,
+                questGiverNpcId: questGiverNpcId,
+                prerequisites: source.Prerequisites.Select(prerequisite => prerequisite.Clone()).ToList(),
+                deliverables: source.Deliverables.Select(deliverable => deliverable.Clone()).ToList(),
+                rewards: source.Rewards.Select(reward => reward.Clone()).ToList(),
+                dailyRewards: source.DailyRewards.Select(reward => reward.Clone()).ToList());
         }
 
         private bool FailValidation(string expeditionId, string message)

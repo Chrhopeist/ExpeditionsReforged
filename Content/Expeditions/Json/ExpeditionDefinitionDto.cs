@@ -65,7 +65,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         public bool IsDailyEligible { get; set; }
 
         /// <summary>
-        /// The quest giver NPCID used to select the head icon for the expedition.
+        /// The quest giver NPCID that represents the NPC responsible for this expedition.
         /// </summary>
         [JsonPropertyName("questGiverNpcId")]
         public int QuestGiverNpcId { get; set; }
