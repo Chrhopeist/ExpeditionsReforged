@@ -7,7 +7,7 @@
     "rarity": 1,
     "durationTicks": 7200,
     "difficulty": 1,
-    "minProgressionTier": "EarlyGame",
+    "minProgressionTier": "1",
     "isRepeatable": true,
     "isDailyEligible": true,
     "questGiverNpcId": 38,
@@ -24,22 +24,20 @@
     "rarity": 1,
     "durationTicks": 7200,
     "difficulty": 2,
-    "minProgressionTier": "PreHardmode",
+    "minProgressionTier": "2",
     "isRepeatable": true,
     "isDailyEligible": true,
-    "questGiverNpcId": 18,
+    "questGiverNpcId": 22,
     "prerequisites": [
       {
         "id": "killnpc_slime",
-        "type": "KillNPC",
-        "target": "Slime",
         "requiredCount": 5,
         "description": "Slay 5 slimes"
       }
     ],
     "deliverables": [
       {
-        "id": 23,
+        "id": "23",
         "requiredCount": 5,
         "consumesItems": false,
         "description": "Bring me 5 gel - you can keep it"
@@ -56,14 +54,14 @@
     "rarity": 1,
     "durationTicks": 7200,
     "difficulty": 1,
-    "minProgressionTier": "EarlyGame",
+    "minProgressionTier": "1",
     "isRepeatable": false,
     "isDailyEligible": false,
     "questGiverNpcId": 18,
     "prerequisites": [],
     "deliverables": [
       {
-        "id": 9,
+        "id": "9",
         "requiredCount": 1,
         "consumesItems": true,
         "description": "Bring me 1 wood"
