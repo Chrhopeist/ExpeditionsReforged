@@ -12,7 +12,7 @@ using Terraria.ModLoader;
 namespace ExpeditionsReforged.Content.Expeditions.Json
 {
     /// <summary>
-    /// Loads expedition definitions from expeditions.json stored in the mod save folder.
+    /// Loads expedition definitions from JSON files embedded in the mod content.
     /// </summary>
     public static class ExpeditionJsonLoader
     {
@@ -27,7 +27,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         };
 
         /// <summary>
-        /// Loads expedition DTOs from the mod save folder.
+        /// Loads expedition DTOs from mod-embedded JSON files.
         /// This method must not be invoked on multiplayer clients.
         /// </summary>
         /// <returns>Read-only list of expedition DTOs.</returns>
@@ -39,40 +39,61 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
 
             Mod mod = ModContent.GetInstance<ExpeditionsReforged>();
-            string filePath = GetExpeditionJsonPath(mod);
 
-            if (!File.Exists(filePath))
+            mod.Logger.Info("[Expeditions] ExpeditionJsonLoader.LoadExpeditionDtos invoked.");
+            foreach (string file in mod.GetFileNames())
             {
-                // Server and single-player sessions seed the save folder from the embedded asset.
-                // Multiplayer clients must never access embedded expedition data.
-                if (!TryEnsureDefaultJsonExists(mod, filePath))
+                mod.Logger.Info($"[Expeditions] Mod file: {file}");
+            }
+
+            List<string> expeditionJsonFiles = mod.GetFileNames()
+                .Where(IsExpeditionJsonFile)
+                .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (expeditionJsonFiles.Count == 0)
+            {
+                mod.Logger.Warn("[Expeditions] No expedition JSON files found under 'Content/Expeditions/Json/'.");
+                return Array.Empty<ExpeditionDefinitionDto>();
+            }
+
+            mod.Logger.Info($"[Expeditions] Expedition JSON files discovered: {string.Join(", ", expeditionJsonFiles)}");
+
+            var dtos = new List<ExpeditionDefinitionDto>();
+            foreach (string expeditionFile in expeditionJsonFiles)
+            {
+                mod.Logger.Info($"[Expeditions] Loading expedition JSON from '{expeditionFile}'.");
+
+                try
                 {
-                    // Missing file should not hard-fail mod compilation; log and continue with no expeditions.
-                    mod.Logger.Error($"Expedition JSON file not found at '{filePath}'.");
-                    return Array.Empty<ExpeditionDefinitionDto>();
+                    // Use compiled mod content; filesystem paths are not authoritative in tModLoader.
+                    using Stream stream = mod.GetFileStream(expeditionFile);
+                    if (stream is null)
+                    {
+                        mod.Logger.Error($"[Expeditions] Failed to open stream for expedition JSON '{expeditionFile}'.");
+                        continue;
+                    }
+
+                    using var reader = new StreamReader(stream);
+                    string json = reader.ReadToEnd();
+                    if (string.IsNullOrWhiteSpace(json))
+                    {
+                        mod.Logger.Error($"[Expeditions] Expedition JSON file '{expeditionFile}' was empty.");
+                        continue;
+                    }
+
+                    IReadOnlyList<ExpeditionDefinitionDto> fileDtos = DeserializeExpeditionDtos(json, expeditionFile, mod);
+                    mod.Logger.Info($"[Expeditions] Deserialized {fileDtos.Count} expedition DTO(s) from '{expeditionFile}'.");
+                    dtos.AddRange(fileDtos);
+                }
+                catch (Exception ex)
+                {
+                    mod.Logger.Error($"[Expeditions] Failed to read expedition JSON from '{expeditionFile}'.", ex);
                 }
             }
 
-            string json;
-            try
-            {
-                json = File.ReadAllText(filePath);
-            }
-            catch (Exception ex)
-            {
-                // File IO can fail due to OS locks or permissions; log and continue with no expeditions.
-                mod.Logger.Error($"Failed to read expedition JSON from '{filePath}'.", ex);
-                return Array.Empty<ExpeditionDefinitionDto>();
-            }
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                // Empty payload is treated as invalid and yields no expeditions.
-                mod.Logger.Error($"Expedition JSON file '{filePath}' was empty.");
-                return Array.Empty<ExpeditionDefinitionDto>();
-            }
-
-            return DeserializeExpeditionDtos(json, filePath, mod);
+            mod.Logger.Info($"[Expeditions] Total expedition DTOs deserialized: {dtos.Count}.");
+            return dtos.AsReadOnly();
         }
 
         /// <summary>
@@ -263,6 +284,17 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             {
                 throw new InvalidDataException($"Expedition '{expeditionId}' is missing required field '{fieldName}'.");
             }
+        }
+
+        private static bool IsExpeditionJsonFile(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return false;
+            }
+
+            return fileName.StartsWith("Content/Expeditions/Json/", StringComparison.OrdinalIgnoreCase)
+                && fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetExpeditionJsonPath(Mod mod)
