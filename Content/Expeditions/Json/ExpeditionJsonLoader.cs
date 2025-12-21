@@ -17,6 +17,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
     public static class ExpeditionJsonLoader
     {
         private const string ExpeditionsFileName = "expeditions.json";
+        private const string EmbeddedExpeditionsAssetPath = "Content/Expeditions/expeditions.json";
 
         private static readonly JsonSerializerOptions SerializerOptions = new()
         {
@@ -42,9 +43,14 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
 
             if (!File.Exists(filePath))
             {
-                // Missing file should not hard-fail mod compilation; log and continue with no expeditions.
-                mod.Logger.Error($"Expedition JSON file not found at '{filePath}'.");
-                return Array.Empty<ExpeditionDefinitionDto>();
+                // Server and single-player sessions seed the save folder from the embedded asset.
+                // Multiplayer clients must never access embedded expedition data.
+                if (!TryEnsureDefaultJsonExists(mod, filePath))
+                {
+                    // Missing file should not hard-fail mod compilation; log and continue with no expeditions.
+                    mod.Logger.Error($"Expedition JSON file not found at '{filePath}'.");
+                    return Array.Empty<ExpeditionDefinitionDto>();
+                }
             }
 
             string json;
@@ -247,6 +253,30 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             string saveFolder = Path.Combine(Main.SavePath, "ModLoader", mod.Name);
             Directory.CreateDirectory(saveFolder);
             return Path.Combine(saveFolder, ExpeditionsFileName);
+        }
+
+        private static bool TryEnsureDefaultJsonExists(Mod mod, string filePath)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? string.Empty);
+
+                byte[] embeddedBytes = mod.GetFileBytes(EmbeddedExpeditionsAssetPath);
+                if (embeddedBytes is null || embeddedBytes.Length == 0)
+                {
+                    mod.Logger.Error($"Embedded expedition JSON asset '{EmbeddedExpeditionsAssetPath}' was missing or empty.");
+                    return false;
+                }
+
+                File.WriteAllBytes(filePath, embeddedBytes);
+                mod.Logger.Info($"Copied default expedition JSON to '{filePath}'.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                mod.Logger.Error($"Failed to copy embedded expedition JSON to '{filePath}'.", ex);
+                return false;
+            }
         }
 
         private static IReadOnlyList<ExpeditionDefinitionDto> DeserializeExpeditionDtos(string json, string sourceLabel, Mod mod)
