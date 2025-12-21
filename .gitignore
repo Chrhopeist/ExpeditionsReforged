@@ -1,0 +1,29 @@
+# =========================
+# tModLoader / Terraria
+# =========================
+bin/
+obj/
+*.pdb
+*.cache
+
+# =========================
+# ExampleMod (reference only)
+# =========================
+ExampleMod/bin/
+ExampleMod/obj/
+ExampleMod/test/**/bin/
+ExampleMod/test/**/obj/
+
+# =========================
+# OS / Editor junk
+# =========================
+Thumbs.db
+*.log
+*.user
+*.suo
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
