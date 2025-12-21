@@ -198,7 +198,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
                         minPlayerLevel: minPlayerLevel,
                         isRepeatable: dto.IsRepeatable,
                         isDailyEligible: dto.IsDailyEligible,
-                        npcHeadId: dto.NpcHeadId,
+                        questGiverNpcId: ResolveQuestGiverNpcId(dto),
                         prerequisites: prerequisites,
                         deliverables: deliverables,
                         rewards: rewards,
@@ -245,6 +245,24 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
 
             return category;
+        }
+
+        /// <summary>
+        /// Resolves the quest giver NPCID, preferring the new field while preserving legacy npcHeadId imports.
+        /// </summary>
+        private static int ResolveQuestGiverNpcId(ExpeditionDefinitionDto dto)
+        {
+            if (dto.QuestGiverNpcId != default)
+            {
+                return dto.QuestGiverNpcId;
+            }
+
+            if (dto.LegacyNpcHeadId.HasValue)
+            {
+                return dto.LegacyNpcHeadId.Value;
+            }
+
+            return default;
         }
 
         private static int ParseProgressionTier(string tierValue, string expeditionId)

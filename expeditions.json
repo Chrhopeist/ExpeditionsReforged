@@ -10,7 +10,7 @@
     "minProgressionTier": "EarlyGame",
     "isRepeatable": true,
     "isDailyEligible": true,
-    "npcHeadId": 38,
+    "questGiverNpcId": 38,
     "prerequisites": [],
     "deliverables": [],
     "rewards": [],
@@ -27,7 +27,7 @@
     "minProgressionTier": "PreHardmode",
     "isRepeatable": true,
     "isDailyEligible": true,
-    "npcHeadId": 18,
+    "questGiverNpcId": 18,
     "prerequisites": [
       {
         "id": "killnpc_slime",
@@ -59,7 +59,7 @@
     "minProgressionTier": "EarlyGame",
     "isRepeatable": false,
     "isDailyEligible": false,
-    "npcHeadId": 18,
+    "questGiverNpcId": 18,
     "prerequisites": [],
     "deliverables": [
       {

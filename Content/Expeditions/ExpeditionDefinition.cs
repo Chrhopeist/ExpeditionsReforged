@@ -82,9 +82,9 @@ namespace ExpeditionsReforged.Content.Expeditions
         public bool IsDailyEligible { get; }
 
         /// <summary>
-        /// The head icon ID for the NPC patronizing the expedition.
+        /// The quest giver NPCID used to select the head icon for the expedition.
         /// </summary>
-        public int NpcHeadId { get; }
+        public int QuestGiverNpcId { get; }
 
         /// <summary>
         /// Ordered list of prerequisite conditions that must be satisfied to start the expedition.
@@ -124,7 +124,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// <param name="minPlayerLevel">Minimum player progression level required to start the expedition.</param>
         /// <param name="isRepeatable">Whether the expedition can be repeated after completion.</param>
         /// <param name="isDailyEligible">Whether the expedition can appear as a daily contract.</param>
-        /// <param name="npcHeadId">Head icon ID that represents the quest giver.</param>
+        /// <param name="questGiverNpcId">Quest giver NPCID used to select the head icon.</param>
         /// <param name="prerequisites">Optional set of prerequisite conditions.</param>
         /// <param name="deliverables">Optional set of deliverables required to complete the expedition.</param>
         /// <param name="rewards">Reward list granted on completion.</param>
@@ -140,7 +140,7 @@ namespace ExpeditionsReforged.Content.Expeditions
             int minPlayerLevel,
             bool isRepeatable,
             bool isDailyEligible,
-            int npcHeadId,
+            int questGiverNpcId,
             IEnumerable<ConditionDefinition>? prerequisites = null,
             IEnumerable<DeliverableDefinition>? deliverables = null,
             IEnumerable<RewardDefinition>? rewards = null,
@@ -156,7 +156,7 @@ namespace ExpeditionsReforged.Content.Expeditions
             MinPlayerLevel = minPlayerLevel;
             IsRepeatable = isRepeatable;
             IsDailyEligible = isDailyEligible;
-            NpcHeadId = npcHeadId;
+            QuestGiverNpcId = questGiverNpcId;
             Prerequisites = new ReadOnlyCollection<ConditionDefinition>((prerequisites ?? Enumerable.Empty<ConditionDefinition>()).ToList());
             Deliverables = new ReadOnlyCollection<DeliverableDefinition>((deliverables ?? Enumerable.Empty<DeliverableDefinition>()).ToList());
             Rewards = new ReadOnlyCollection<RewardDefinition>((rewards ?? Enumerable.Empty<RewardDefinition>()).ToList());
@@ -180,7 +180,7 @@ namespace ExpeditionsReforged.Content.Expeditions
                 minPlayerLevel: MinPlayerLevel,
                 isRepeatable: IsRepeatable,
                 isDailyEligible: IsDailyEligible,
-                npcHeadId: NpcHeadId,
+                questGiverNpcId: QuestGiverNpcId,
                 prerequisites: Prerequisites.Select(p => p.Clone()).ToList(),
                 deliverables: Deliverables.Select(d => d.Clone()).ToList(),
                 rewards: Rewards.Select(r => r.Clone()).ToList(),
@@ -208,7 +208,7 @@ namespace ExpeditionsReforged.Content.Expeditions
                 .Append('|').Append(Category)
                 .Append('|').Append(Rarity).Append('|').Append(DurationTicks).Append('|').Append(Difficulty)
                 .Append('|').Append(MinPlayerLevel).Append('|').Append(IsRepeatable).Append('|').Append(IsDailyEligible)
-                .Append('|').Append(NpcHeadId);
+                .Append('|').Append(QuestGiverNpcId);
 
             foreach (var prerequisite in Prerequisites)
             {

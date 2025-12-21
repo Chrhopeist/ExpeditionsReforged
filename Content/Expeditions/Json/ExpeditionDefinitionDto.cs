@@ -65,9 +65,17 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         public bool IsDailyEligible { get; set; }
 
         /// <summary>
-        /// The head icon ID for the NPC patronizing the expedition.
+        /// The quest giver NPCID used to select the head icon for the expedition.
         /// </summary>
-        public int NpcHeadId { get; set; }
+        [JsonPropertyName("questGiverNpcId")]
+        public int QuestGiverNpcId { get; set; }
+
+        /// <summary>
+        /// Legacy npcHeadId field retained for backward-compatible JSON imports.
+        /// </summary>
+        [JsonPropertyName("npcHeadId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? LegacyNpcHeadId { get; set; }
 
         /// <summary>
         /// Ordered list of prerequisite conditions that must be satisfied to start the expedition.
