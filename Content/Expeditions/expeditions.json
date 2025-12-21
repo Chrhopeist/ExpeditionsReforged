@@ -1,0 +1,49 @@
+[
+  {
+    "id": "dummy",
+    "displayName": "dummy",
+    "description": "dummy",
+    "category": "Forest",
+    "rarity": 1,
+    "repeatable": true,
+    "dailyEligible": true,
+    "npcHeadId": 38,
+    "conditions": [],
+    "deliverables": [],
+    "rewards": []
+  },
+  {
+    "id": "slime_time",
+    "displayName": "Slime Time",
+    "description": "The slimes are taking over the town",
+    "category": "Events",
+    "rarity": 1,
+    "repeatable": true,
+    "dailyEligible": true,
+    "npcHeadId": 18,
+    "conditions": [
+      {
+        "id": "killnpc_slime",
+        "type": "KillNPC",
+        "target": "Slime",
+        "requiredCount": 5,
+        "description": "Slay 5 slimes"
+      }
+    ],
+    "deliverables": [],
+    "rewards": []
+  },
+  {
+    "id": "get_wood",
+    "displayName": "Get Wood",
+    "description": "I just really need that wood",
+    "category": "Forest",
+    "rarity": 1,
+    "repeatable": false,
+    "dailyEligible": false,
+    "npcHeadId": 18,
+    "conditions": [],
+    "deliverables": [],
+    "rewards": []
+  }
+]
