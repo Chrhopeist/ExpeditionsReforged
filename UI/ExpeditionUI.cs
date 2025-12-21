@@ -5,7 +5,10 @@ using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
 using Terraria;
+using Terraria.Content;
 using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
@@ -52,7 +55,7 @@ private UIText _detailsPlaceholder = null!;
 
 private readonly List<ExpeditionListEntry> _entries = new();
 private readonly List<string> _categories = new();
-private readonly List<int> _npcHeads = new();
+private readonly List<int> _questGiverNpcIds = new();
 private string _selectedExpeditionId = string.Empty;
 private string _selectedCategory = "All";
 private CompletionFilter _completionFilter = CompletionFilter.All;
@@ -890,13 +893,13 @@ _categoryButton?.SetText(_selectedCategory);
 
 private void PopulateNpcHeads()
 {
-_npcHeads.Clear();
+_questGiverNpcIds.Clear();
 var registry = ModContent.GetInstance<ExpeditionRegistry>();
 foreach (int head in registry.Definitions.Select(definition => definition.QuestGiverNpcId).Distinct())
 {
 if (head >= 0)
 {
-_npcHeads.Add(head);
+_questGiverNpcIds.Add(head);
 }
 }
 
@@ -915,10 +918,16 @@ _npcHeadButton.Color = Color.Gray * 0.7f;
 return;
 }
 
-int headId = _filterQuestGiverNpcId.Value;
-headId = Math.Clamp(headId, 0, TextureAssets.NpcHead.Length - 1);
-_npcHeadButton.SetImage(TextureAssets.NpcHead[headId]);
+if (TryGetQuestGiverHeadTexture(_filterQuestGiverNpcId.Value, out Asset<Texture2D> headTexture))
+{
+_npcHeadButton.SetImage(headTexture);
 _npcHeadButton.Color = Color.White;
+return;
+}
+
+// Fallback to a generic head icon if the NPC head lookup is invalid.
+_npcHeadButton.SetImage(TextureAssets.NpcHead[0]);
+_npcHeadButton.Color = Color.Gray * 0.7f;
 }
 
 private void CycleCategory()
@@ -965,7 +974,7 @@ RequestExpeditionListRefresh();
 
 private void CycleNpcHead()
 {
-if (_npcHeads.Count == 0)
+if (_questGiverNpcIds.Count == 0)
 {
 _filterQuestGiverNpcId = null;
 UpdateNpcHeadTexture();
@@ -975,13 +984,13 @@ return;
 
 if (!_filterQuestGiverNpcId.HasValue)
 {
-_filterQuestGiverNpcId = _npcHeads.First();
+_filterQuestGiverNpcId = _questGiverNpcIds.First();
 }
 else
 {
-int currentIndex = _npcHeads.IndexOf(_filterQuestGiverNpcId.Value);
-int nextIndex = (currentIndex + 1) % (_npcHeads.Count + 1);
-_filterQuestGiverNpcId = nextIndex >= _npcHeads.Count ? null : _npcHeads[nextIndex];
+int currentIndex = _questGiverNpcIds.IndexOf(_filterQuestGiverNpcId.Value);
+int nextIndex = (currentIndex + 1) % (_questGiverNpcIds.Count + 1);
+_filterQuestGiverNpcId = nextIndex >= _questGiverNpcIds.Count ? null : _questGiverNpcIds[nextIndex];
 }
 
 UpdateNpcHeadTexture();
@@ -1147,6 +1156,25 @@ _ => new Color(200, 200, 200)
 };
 }
 
+public static bool TryGetQuestGiverHeadTexture(int questGiverNpcId, out Asset<Texture2D> headTex)
+{
+headTex = null!;
+// Only attempt to resolve head assets using the ContentSamples cache so we never instantiate new NPCs.
+if (!ContentSamples.NpcsByNetId.TryGetValue(questGiverNpcId, out NPC sampleNpc))
+{
+return false;
+}
+
+int derivedHeadIndex = TownNPCProfiles.GetHeadIndexSafe(sampleNpc);
+if (derivedHeadIndex < 0 || derivedHeadIndex >= TextureAssets.NpcHead.Length)
+{
+return false;
+}
+
+headTex = TextureAssets.NpcHead[derivedHeadIndex];
+return headTex != null;
+}
+
 private class RarityScrollbarMarkers : UIElement
 {
 private readonly List<(float position, Color color)> _markers = new();
@@ -1216,8 +1244,18 @@ PaddingBottom = owner.Scale(6f);
 BackgroundColor = _defaultBackground;
 BorderColor = new Color(80, 104, 192);
 
-int headIndex = Math.Clamp(view.QuestGiverNpcId, 0, TextureAssets.NpcHead.Length - 1);
-_npcHead = new UIImage(TextureAssets.NpcHead[headIndex]);
+Asset<Texture2D> headTexture = TextureAssets.NpcHead[0];
+Color headColor = Color.Gray * 0.7f;
+if (TryGetQuestGiverHeadTexture(view.QuestGiverNpcId, out Asset<Texture2D> resolvedHead))
+{
+headTexture = resolvedHead;
+headColor = Color.White;
+}
+
+_npcHead = new UIImage(headTexture)
+{
+Color = headColor
+};
 _npcHead.Left.Set(-owner.Scale(54f), 1f);
 _npcHead.Top.Set(owner.Scale(4f), 0f);
 _npcHead.Width.Set(owner.Scale(44f), 0f);
