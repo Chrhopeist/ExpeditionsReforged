@@ -200,9 +200,9 @@ namespace ExpeditionsReforged.Systems
                     return FailValidation(definition.Id, $"Expedition '{definition.Id}' uses an undefined category '{definition.Category}'. The definition was skipped.");
                 }
 
-                if (definition.NpcHeadId >= 0 && (definition.NpcHeadId >= TextureAssets.NpcHead.Length))
+                if (definition.QuestGiverNpcId >= 0 && (definition.QuestGiverNpcId >= TextureAssets.NpcHead.Length))
                 {
-                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' references invalid NPC head id {definition.NpcHeadId}. The definition was skipped.");
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' references invalid quest giver NPCID {definition.QuestGiverNpcId}. The definition was skipped.");
                 }
 
                 if (definition.DurationTicks <= 0)

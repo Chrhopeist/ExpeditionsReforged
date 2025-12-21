@@ -58,7 +58,7 @@ private string _selectedCategory = "All";
 private CompletionFilter _completionFilter = CompletionFilter.All;
 private bool _filterRepeatableOnly;
 private bool _filterTrackedOnly;
-private int? _filterNpcHeadId;
+private int? _filterQuestGiverNpcId;
 private SortMode _sortMode = SortMode.Name;
 private bool _sortAscending = true;
 private bool _needsPopulate = true;
@@ -557,9 +557,9 @@ if (_filterRepeatableOnly)
 definitions = definitions.Where(definition => definition.IsRepeatable);
 }
 
-if (_filterNpcHeadId.HasValue)
+if (_filterQuestGiverNpcId.HasValue)
 {
-definitions = definitions.Where(definition => definition.NpcHeadId == _filterNpcHeadId.Value);
+definitions = definitions.Where(definition => definition.QuestGiverNpcId == _filterQuestGiverNpcId.Value);
 }
 
 var orderedDefinitions = ApplySort(definitions, player);
@@ -892,7 +892,7 @@ private void PopulateNpcHeads()
 {
 _npcHeads.Clear();
 var registry = ModContent.GetInstance<ExpeditionRegistry>();
-foreach (int head in registry.Definitions.Select(definition => definition.NpcHeadId).Distinct())
+foreach (int head in registry.Definitions.Select(definition => definition.QuestGiverNpcId).Distinct())
 {
 if (head >= 0)
 {
@@ -908,14 +908,14 @@ private void UpdateNpcHeadTexture()
 if (_npcHeadButton == null)
 return;
 
-if (!_filterNpcHeadId.HasValue)
+if (!_filterQuestGiverNpcId.HasValue)
 {
 _npcHeadButton.SetImage(TextureAssets.NpcHead[0]);
 _npcHeadButton.Color = Color.Gray * 0.7f;
 return;
 }
 
-int headId = _filterNpcHeadId.Value;
+int headId = _filterQuestGiverNpcId.Value;
 headId = Math.Clamp(headId, 0, TextureAssets.NpcHead.Length - 1);
 _npcHeadButton.SetImage(TextureAssets.NpcHead[headId]);
 _npcHeadButton.Color = Color.White;
@@ -967,21 +967,21 @@ private void CycleNpcHead()
 {
 if (_npcHeads.Count == 0)
 {
-_filterNpcHeadId = null;
+_filterQuestGiverNpcId = null;
 UpdateNpcHeadTexture();
 RequestExpeditionListRefresh();
 return;
 }
 
-if (!_filterNpcHeadId.HasValue)
+if (!_filterQuestGiverNpcId.HasValue)
 {
-_filterNpcHeadId = _npcHeads.First();
+_filterQuestGiverNpcId = _npcHeads.First();
 }
 else
 {
-int currentIndex = _npcHeads.IndexOf(_filterNpcHeadId.Value);
+int currentIndex = _npcHeads.IndexOf(_filterQuestGiverNpcId.Value);
 int nextIndex = (currentIndex + 1) % (_npcHeads.Count + 1);
-_filterNpcHeadId = nextIndex >= _npcHeads.Count ? null : _npcHeads[nextIndex];
+_filterQuestGiverNpcId = nextIndex >= _npcHeads.Count ? null : _npcHeads[nextIndex];
 }
 
 UpdateNpcHeadTexture();
@@ -1060,7 +1060,7 @@ progressFraction = totalRequired > 0 ? Math.Clamp(totalProgress / (float)totalRe
 
 bool isTracked = player != null && string.Equals(player.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
 
-return new ExpeditionView(definition.Id, definition.DisplayName, definition.CategoryName, status, isAvailable, isCompleted, isActive, definition.Rarity, definition.DurationTicks, definition.Difficulty, definition.NpcHeadId, definition.IsRepeatable, progressFraction, isTracked);
+return new ExpeditionView(definition.Id, definition.DisplayName, definition.CategoryName, status, isAvailable, isCompleted, isActive, definition.Rarity, definition.DurationTicks, definition.Difficulty, definition.QuestGiverNpcId, definition.IsRepeatable, progressFraction, isTracked);
 }
 
 private UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)
@@ -1216,7 +1216,7 @@ PaddingBottom = owner.Scale(6f);
 BackgroundColor = _defaultBackground;
 BorderColor = new Color(80, 104, 192);
 
-int headIndex = Math.Clamp(view.NpcHeadId, 0, TextureAssets.NpcHead.Length - 1);
+int headIndex = Math.Clamp(view.QuestGiverNpcId, 0, TextureAssets.NpcHead.Length - 1);
 _npcHead = new UIImage(TextureAssets.NpcHead[headIndex]);
 _npcHead.Left.Set(-owner.Scale(54f), 1f);
 _npcHead.Top.Set(owner.Scale(4f), 0f);
@@ -1320,12 +1320,12 @@ public bool IsActive { get; }
 public int Rarity { get; }
 public int DurationTicks { get; }
 public int Difficulty { get; }
-public int NpcHeadId { get; }
+public int QuestGiverNpcId { get; }
 public bool IsRepeatable { get; }
 public float ProgressFraction { get; }
 public bool IsTracked { get; }
 
-public ExpeditionView(string id, string displayName, string category, string status, bool isAvailable, bool isCompleted, bool isActive, int rarity, int durationTicks, int difficulty, int npcHeadId, bool isRepeatable, float progressFraction, bool isTracked)
+public ExpeditionView(string id, string displayName, string category, string status, bool isAvailable, bool isCompleted, bool isActive, int rarity, int durationTicks, int difficulty, int questGiverNpcId, bool isRepeatable, float progressFraction, bool isTracked)
 {
 Id = id;
 DisplayName = displayName;
@@ -1337,7 +1337,7 @@ IsActive = isActive;
 Rarity = rarity;
 DurationTicks = durationTicks;
 Difficulty = difficulty;
-NpcHeadId = npcHeadId;
+QuestGiverNpcId = questGiverNpcId;
 IsRepeatable = isRepeatable;
 ProgressFraction = progressFraction;
 IsTracked = isTracked;

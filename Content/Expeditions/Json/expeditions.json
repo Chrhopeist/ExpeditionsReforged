@@ -7,7 +7,7 @@
     "rarity": 1,
     "repeatable": true,
     "dailyEligible": true,
-    "npcHeadId": 38,
+    "questGiverNpcId": 38,
     "conditions": [],
     "deliverables": [],
     "rewards": []
@@ -20,7 +20,7 @@
     "rarity": 1,
     "repeatable": true,
     "dailyEligible": true,
-    "npcHeadId": 18,
+    "questGiverNpcId": 18,
     "conditions": [
       {
         "id": "killnpc_slime",
@@ -41,7 +41,7 @@
     "rarity": 1,
     "repeatable": false,
     "dailyEligible": false,
-    "npcHeadId": 18,
+    "questGiverNpcId": 18,
     "conditions": [],
     "deliverables": [],
     "rewards": []

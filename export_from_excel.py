@@ -51,7 +51,7 @@ def export_expeditions():
             "minProgressionTier": row.get("minProgressionTier", ""),
             "isRepeatable": bool(row.get("isRepeatable", False)),
             "isDailyEligible": bool(row.get("isDailyEligible", False)),
-            "npcHeadId": int(row["npcHeadID"]) if row.get("npcHeadID", "") != "" else None,
+            "questGiverNpcId": int(row["npcHeadID"]) if row.get("npcHeadID", "") != "" else None,
             "prerequisites": [],
             "deliverables": [],
             "rewards": [],
