@@ -1,49 +1,73 @@
 [
   {
     "id": "dummy",
-    "displayName": "dummy",
-    "description": "dummy",
+    "displayNameKey": "dummy",
+    "descriptionKey": "dummy",
     "category": "Forest",
     "rarity": 1,
-    "repeatable": true,
-    "dailyEligible": true,
+    "durationTicks": 7200,
+    "difficulty": 1,
+    "minProgressionTier": "1",
+    "isRepeatable": true,
+    "isDailyEligible": true,
     "questGiverNpcId": 38,
-    "conditions": [],
+    "prerequisites": [],
     "deliverables": [],
-    "rewards": []
+    "rewards": [],
+    "dailyRewards": []
   },
   {
     "id": "slime_time",
-    "displayName": "Slime Time",
-    "description": "The slimes are taking over the town",
-    "category": "Events",
+    "displayNameKey": "Slime Time",
+    "descriptionKey": "The slimes are taking over the town",
+    "category": "Forest",
     "rarity": 1,
-    "repeatable": true,
-    "dailyEligible": true,
-    "questGiverNpcId": 18,
-    "conditions": [
+    "durationTicks": 7200,
+    "difficulty": 2,
+    "minProgressionTier": "2",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "questGiverNpcId": 22,
+    "prerequisites": [
       {
         "id": "killnpc_slime",
-        "type": "KillNPC",
-        "target": "Slime",
         "requiredCount": 5,
         "description": "Slay 5 slimes"
       }
     ],
-    "deliverables": [],
-    "rewards": []
+    "deliverables": [
+      {
+        "id": "23",
+        "requiredCount": 5,
+        "consumesItems": false,
+        "description": "Bring me 5 gel - you can keep it"
+      }
+    ],
+    "rewards": [],
+    "dailyRewards": []
   },
   {
     "id": "get_wood",
-    "displayName": "Get Wood",
-    "description": "I just really need that wood",
+    "displayNameKey": "Get Wood",
+    "descriptionKey": "I just really need that wood",
     "category": "Forest",
     "rarity": 1,
-    "repeatable": false,
-    "dailyEligible": false,
+    "durationTicks": 7200,
+    "difficulty": 1,
+    "minProgressionTier": "1",
+    "isRepeatable": false,
+    "isDailyEligible": false,
     "questGiverNpcId": 18,
-    "conditions": [],
-    "deliverables": [],
-    "rewards": []
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": "9",
+        "requiredCount": 1,
+        "consumesItems": true,
+        "description": "Bring me 1 wood"
+      }
+    ],
+    "rewards": [],
+    "dailyRewards": []
   }
 ]
