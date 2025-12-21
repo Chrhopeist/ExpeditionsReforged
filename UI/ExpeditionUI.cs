@@ -773,33 +773,13 @@ _detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f * _uiScale));
 }
 
 _detailsButtonRow.RemoveAllChildren();
-bool canStart = progress == null || (!progress.IsCompleted || definition.IsRepeatable);
 bool canClaim = progress != null && progress.IsCompleted && !progress.RewardsClaimed;
 bool isTracked = activePlayer != null &&
     string.Equals(activePlayer.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
 
-var startButton = CreateActionButton("Start", canStart, () =>
-{
-    if (Main.netMode == NetmodeID.MultiplayerClient)
-    {
-        Main.NewText("Starting expeditions in multiplayer is not yet supported.", 255, 100, 100);
-        return;
-    }
-
-    if (activePlayer == null)
-        return;
-
-    if (ExpeditionService.TryStartExpedition(activePlayer.Player, definition.Id, out string? failReasonKey))
-    {
-        Main.NewText($"Started expedition: {definition.DisplayName}", 100, 255, 100);
-        RequestExpeditionListRefresh();
-    }
-    else
-    {
-        Main.NewText(failReasonKey ?? "Failed to start expedition.", 255, 100, 100);
-    }
-});
-
+// Expedition acceptance should happen through NPC interactions, not the log UI.
+var startButton = CreateActionButton("Start", false, null);
+AddTooltip(startButton, "Accept expeditions by speaking with the quest giver.");
 startButton.Left.Set(0f, 0f);
 _detailsButtonRow.Append(startButton);
 
@@ -811,7 +791,8 @@ var claimButton = CreateActionButton("Claim", canClaim, () =>
 claimButton.Left.Set(Scale(132f), 0f);
 _detailsButtonRow.Append(claimButton);
 
-var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", activePlayer != null, () =>
+bool canTrack = activePlayer != null && (isTracked || progress != null);
+var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
 {
     activePlayer?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
     RequestExpeditionListRefresh();
