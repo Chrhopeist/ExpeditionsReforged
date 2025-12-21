@@ -172,7 +172,9 @@ public class TrackerUI : UIState
             Height = StyleDimension.FromPixels(36f * _scale)
         };
 
-        var startButton = CreateActionButton("Start", progress is null || (definition.IsRepeatable || !progress.IsCompleted), () => Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>().TryStartExpedition(definition.Id));
+        // The tracker UI should not accept/start expeditions directly.
+        var startButton = CreateActionButton("Start", false, null);
+        AddTooltip(startButton, "Accept expeditions by speaking with the quest giver.");
         startButton.Left.Set(0f, 0f);
         buttonRow.Append(startButton);
 
@@ -225,6 +227,11 @@ public class TrackerUI : UIState
         }
 
         return button;
+    }
+
+    private static void AddTooltip(UIElement element, string tooltip)
+    {
+        element.OnMouseOver += (_, _) => Main.instance.MouseText(tooltip);
     }
 
     private UIElement CreateDeliverableRow(DeliverableDefinition deliverable, int current)
