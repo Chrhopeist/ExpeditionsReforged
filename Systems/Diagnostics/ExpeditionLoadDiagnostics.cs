@@ -11,7 +11,7 @@ namespace ExpeditionsReforged.Systems.Diagnostics
     /// <summary>
     /// Records per-expedition JSON load failures and emits a diagnostic log for server operators.
     /// </summary>
-    internal sealed class ExpeditionLoadDiagnostics
+    public sealed class ExpeditionLoadDiagnostics
     {
         private const string LogFileName = "expedition_load_errors.log";
         private const string LogsFolderName = "Logs";
