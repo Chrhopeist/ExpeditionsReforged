@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
+using ExpeditionsReforged.Systems.Diagnostics;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -100,7 +100,9 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
         /// <summary>
         /// Builds expedition definitions from DTOs.
         /// </summary>
-        public static IReadOnlyList<ExpeditionDefinition> BuildDefinitions(IReadOnlyList<ExpeditionDefinitionDto> dtos)
+        public static IReadOnlyList<ExpeditionDefinition> BuildDefinitions(
+            IReadOnlyList<ExpeditionDefinitionDto> dtos,
+            ExpeditionLoadDiagnostics diagnostics = null)
         {
             if (dtos is null)
             {
@@ -113,26 +115,39 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
 
             for (int index = 0; index < dtos.Count; index++)
             {
-                ExpeditionDefinitionDto dto = dtos[index] ?? throw new InvalidDataException($"Expedition entry at index {index} is null.");
-
-                if (string.IsNullOrWhiteSpace(dto.Id))
+                ExpeditionDefinitionDto dto = dtos[index];
+                string expeditionId = dto?.Id;
+                if (string.IsNullOrWhiteSpace(expeditionId))
                 {
-                    ThrowLoggedError(mod, $"Expedition entry at index {index} has an empty Id.", new InvalidDataException("Expedition Ids must be non-empty."));
+                    expeditionId = $"<index:{index}>";
                 }
 
-                if (!seenIds.Add(dto.Id))
+                if (dto is null)
                 {
-                    ThrowLoggedError(mod, $"Duplicate expedition Id '{dto.Id}' detected.", new InvalidDataException("Expedition Ids must be unique."));
+                    string reason = $"Expedition entry at index {index} is null.";
+                    mod.Logger.Warn(reason);
+                    diagnostics?.RecordFailure(expeditionId, reason);
+                    continue;
                 }
 
                 try
                 {
-                    ValidateRequiredText(dto.DisplayNameKey, "DisplayNameKey", dto.Id, mod);
-                    ValidateRequiredText(dto.DescriptionKey, "DescriptionKey", dto.Id, mod);
-                    ValidateRequiredText(dto.Category, "Category", dto.Id, mod);
+                    if (string.IsNullOrWhiteSpace(dto.Id))
+                    {
+                        throw new InvalidDataException($"Expedition entry at index {index} has an empty Id.");
+                    }
 
-                    ExpeditionCategory category = ParseCategory(dto.Category, dto.Id, mod);
-                    int minPlayerLevel = ParseProgressionTier(ResolveProgressionTier(dto), dto.Id, mod);
+                    if (!seenIds.Add(dto.Id))
+                    {
+                        throw new InvalidDataException($"Duplicate expedition Id '{dto.Id}' detected.");
+                    }
+
+                    ValidateRequiredText(dto.DisplayNameKey, "DisplayNameKey", dto.Id);
+                    ValidateRequiredText(dto.DescriptionKey, "DescriptionKey", dto.Id);
+                    ValidateRequiredText(dto.Category, "Category", dto.Id);
+
+                    ExpeditionCategory category = ParseCategory(dto.Category, dto.Id);
+                    int minPlayerLevel = ParseProgressionTier(ResolveProgressionTier(dto), dto.Id);
 
                     var prerequisites = (dto.Prerequisites ?? new List<ConditionDefinitionDto>())
                         .Select(condition => new ConditionDefinition(condition.Id, condition.RequiredCount, condition.Description))
@@ -169,7 +184,9 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
                 }
                 catch (Exception ex)
                 {
-                    ThrowLoggedError(mod, $"Failed to build expedition definition '{dto.Id}'.", ex);
+                    string message = $"Failed to build expedition definition '{expeditionId}': {ex.Message}";
+                    mod.Logger.Warn(message);
+                    diagnostics?.RecordFailure(expeditionId, ex.Message);
                 }
             }
 
@@ -196,19 +213,19 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             }
         }
 
-        private static ExpeditionCategory ParseCategory(string categoryValue, string expeditionId, Mod mod)
+        private static ExpeditionCategory ParseCategory(string categoryValue, string expeditionId)
         {
             if (!Enum.TryParse(categoryValue, true, out ExpeditionCategory category) ||
                 !Enum.IsDefined(typeof(ExpeditionCategory), category) ||
                 category == ExpeditionCategory.Unknown)
             {
-                ThrowLoggedError(mod, $"Expedition '{expeditionId}' uses invalid category '{categoryValue}'.", new InvalidDataException("Invalid expedition category."));
+                throw new InvalidDataException($"Expedition '{expeditionId}' uses invalid category '{categoryValue}'.");
             }
 
             return category;
         }
 
-        private static int ParseProgressionTier(string tierValue, string expeditionId, Mod mod)
+        private static int ParseProgressionTier(string tierValue, string expeditionId)
         {
             // Progression tiers are represented as positive integer strings until a dedicated progression system is implemented.
             string trimmed = tierValue?.Trim() ?? string.Empty;
@@ -219,7 +236,7 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
 
             if (!int.TryParse(trimmed, out int minPlayerLevel) || minPlayerLevel < 1)
             {
-                ThrowLoggedError(mod, $"Expedition '{expeditionId}' uses invalid progression tier '{tierValue}'.", new InvalidDataException("Progression tiers must be positive integers represented as strings."));
+                throw new InvalidDataException($"Expedition '{expeditionId}' uses invalid progression tier '{tierValue}'.");
             }
 
             return minPlayerLevel;
@@ -240,11 +257,11 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             return string.Empty;
         }
 
-        private static void ValidateRequiredText(string value, string fieldName, string expeditionId, Mod mod)
+        private static void ValidateRequiredText(string value, string fieldName, string expeditionId)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                ThrowLoggedError(mod, $"Expedition '{expeditionId}' is missing required field '{fieldName}'.", new InvalidDataException($"Missing required field '{fieldName}'."));
+                throw new InvalidDataException($"Expedition '{expeditionId}' is missing required field '{fieldName}'.");
             }
         }
 
@@ -312,11 +329,5 @@ namespace ExpeditionsReforged.Content.Expeditions.Json
             return Array.Empty<ExpeditionDefinitionDto>();
         }
 
-        [DoesNotReturn]
-        private static void ThrowLoggedError(Mod mod, string message, Exception exception)
-        {
-            mod.Logger.Error(message, exception);
-            throw exception;
-        }
     }
 }

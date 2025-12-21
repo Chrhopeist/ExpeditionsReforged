@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Content.Expeditions.Json;
+using ExpeditionsReforged.Systems.Diagnostics;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
@@ -22,12 +23,14 @@ namespace ExpeditionsReforged.Systems
 
         private IReadOnlyCollection<ExpeditionDefinition> _definitionCollection = Array.Empty<ExpeditionDefinition>();
         private IReadOnlyList<ExpeditionDefinitionDto> _definitionDtos = Array.Empty<ExpeditionDefinitionDto>();
+        private ExpeditionLoadDiagnostics _loadDiagnostics;
 
         public IReadOnlyCollection<ExpeditionDefinition> Definitions => _definitionCollection;
 
         public override void Load()
         {
             ClearDefinitions();
+            _loadDiagnostics = null;
 
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
@@ -37,16 +40,19 @@ namespace ExpeditionsReforged.Systems
                 return;
             }
 
+            _loadDiagnostics = new ExpeditionLoadDiagnostics();
             IReadOnlyList<ExpeditionDefinitionDto> dtos = ExpeditionJsonLoader.LoadExpeditionDtos();
             _definitionDtos = dtos;
-            IReadOnlyList<ExpeditionDefinition> definitions = ExpeditionJsonLoader.BuildDefinitions(dtos);
+            IReadOnlyList<ExpeditionDefinition> definitions = ExpeditionJsonLoader.BuildDefinitions(dtos, _loadDiagnostics);
             FinalizeDefinitions(definitions);
+            _loadDiagnostics.WriteLog(Mod);
         }
 
         public override void Unload()
         {
             ClearDefinitions();
             _definitionDtos = Array.Empty<ExpeditionDefinitionDto>();
+            _loadDiagnostics = null;
         }
 
         public IReadOnlyCollection<ExpeditionDefinition> GetAll() => _definitionCollection;
@@ -169,76 +175,67 @@ namespace ExpeditionsReforged.Systems
 
             if (definition is null)
             {
-                Mod.Logger.Warn("Skipping null expedition definition.");
-                return false;
+                return FailValidation("<null>", "Skipping null expedition definition.");
             }
 
             try
             {
                 if (string.IsNullOrWhiteSpace(definition.Id))
                 {
-                    Mod.Logger.Warn("Expedition definitions must supply a non-empty ID. Definition skipped.");
-                    return false;
+                    return FailValidation("<unknown>", "Expedition definitions must supply a non-empty ID. Definition skipped.");
                 }
 
                 if (existing.ContainsKey(definition.Id))
                 {
-                    Mod.Logger.Warn($"Duplicate expedition id '{definition.Id}' detected during registration. The duplicate was ignored.");
-                    return false;
+                    return FailValidation(definition.Id, $"Duplicate expedition id '{definition.Id}' detected during registration. The duplicate was ignored.");
                 }
 
                 if (string.IsNullOrWhiteSpace(definition.DisplayName))
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' has no display name and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' has no display name and was skipped.");
                 }
 
                 if (!Enum.IsDefined(typeof(ExpeditionCategory), definition.Category) || definition.Category == ExpeditionCategory.Unknown)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' uses an undefined category '{definition.Category}'. The definition was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' uses an undefined category '{definition.Category}'. The definition was skipped.");
                 }
 
                 if (definition.NpcHeadId >= 0 && (definition.NpcHeadId >= TextureAssets.NpcHead.Length))
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' references invalid NPC head id {definition.NpcHeadId}. The definition was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' references invalid NPC head id {definition.NpcHeadId}. The definition was skipped.");
                 }
 
                 if (definition.DurationTicks <= 0)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' has non-positive duration and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' has non-positive duration and was skipped.");
                 }
 
                 if (definition.Difficulty <= 0)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' has non-positive difficulty and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' has non-positive difficulty and was skipped.");
                 }
 
                 if (definition.MinPlayerLevel < 0)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' has a negative minimum player level and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' has a negative minimum player level and was skipped.");
                 }
 
                 if (definition.Rarity < 0)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' has a negative rarity and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' has a negative rarity and was skipped.");
                 }
 
                 if (!ValidateCollections(definition))
                     return false;
 
                 validated = definition.Clone();
+                _loadDiagnostics?.RecordSuccess(validated.Id);
                 return true;
             }
             catch (Exception ex)
             {
-                Mod.Logger.Warn($"Failed to register expedition '{definition?.Id ?? "<unknown>"}': {ex.Message}");
-                return false;
+                string expeditionId = definition?.Id ?? "<unknown>";
+                return FailValidation(expeditionId, $"Failed to register expedition '{expeditionId}': {ex.Message}");
             }
         }
 
@@ -248,8 +245,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (prerequisite is null)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null prerequisite and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' contains a null prerequisite and was skipped.");
                 }
             }
 
@@ -257,8 +253,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (deliverable is null)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null deliverable and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' contains a null deliverable and was skipped.");
                 }
             }
 
@@ -266,8 +261,7 @@ namespace ExpeditionsReforged.Systems
             {
                 if (reward is null)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null reward and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' contains a null reward and was skipped.");
                 }
             }
 
@@ -275,12 +269,18 @@ namespace ExpeditionsReforged.Systems
             {
                 if (reward is null)
                 {
-                    Mod.Logger.Warn($"Expedition '{definition.Id}' contains a null daily reward and was skipped.");
-                    return false;
+                    return FailValidation(definition.Id, $"Expedition '{definition.Id}' contains a null daily reward and was skipped.");
                 }
             }
 
             return true;
+        }
+
+        private bool FailValidation(string expeditionId, string message)
+        {
+            Mod.Logger.Warn(message);
+            _loadDiagnostics?.RecordFailure(expeditionId, message);
+            return false;
         }
     }
 }
