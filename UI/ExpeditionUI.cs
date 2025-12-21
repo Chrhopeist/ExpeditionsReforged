@@ -9,7 +9,6 @@ using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
 using Terraria;
 using Terraria.GameContent;
-using Terraria.GameContent.Profiles;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -1165,13 +1164,13 @@ if (!ContentSamples.NpcsByNetId.TryGetValue(questGiverNpcId, out NPC sampleNpc))
 return false;
 }
 
-int derivedHeadIndex = TownNPCProfiles.GetHeadIndexSafe(sampleNpc);
-if (derivedHeadIndex < 0 || derivedHeadIndex >= TextureAssets.NpcHead.Length)
+int derivedHeadIndex = Terraria.GameContent.TownNPCProfiles.GetHeadIndexSafe(sampleNpc);
+if (derivedHeadIndex < 0 || derivedHeadIndex >= Terraria.GameContent.TextureAssets.NpcHead.Length)
 {
 return false;
 }
 
-headTex = TextureAssets.NpcHead[derivedHeadIndex];
+headTex = Terraria.GameContent.TextureAssets.NpcHead[derivedHeadIndex];
 return headTex != null;
 }
 
