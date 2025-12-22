@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Players;
 using Terraria;
@@ -110,6 +111,53 @@ namespace ExpeditionsReforged.Systems
             // against ExpeditionsPlayer's condition state or world state as appropriate.
 
             return true;
+        }
+
+        /// <summary>
+        /// Determines whether the supplied NPC type can currently offer expeditions to the player.
+        /// This is a pure query with no state mutations and is safe to use from UI hooks.
+        /// </summary>
+        /// <param name="npcType">The NPC type to check.</param>
+        /// <param name="player">The player interacting with the NPC.</param>
+        /// <returns>True if at least one eligible expedition is available; otherwise false.</returns>
+        public static bool IsExpeditionGiver(int npcType, Player player)
+        {
+            if (player == null || !player.active)
+            {
+                return false;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
+            IEnumerable<ExpeditionDefinition> definitions = registry.Definitions;
+
+            foreach (ExpeditionDefinition definition in definitions)
+            {
+                if (definition.QuestGiverNpcId != npcType)
+                {
+                    continue;
+                }
+
+                // Hide already-active expeditions and completed non-repeatable entries.
+                if (expeditionsPlayer.IsExpeditionActive(definition.Id))
+                {
+                    continue;
+                }
+
+                if (!definition.IsRepeatable && expeditionsPlayer.IsExpeditionCompleted(definition.Id))
+                {
+                    continue;
+                }
+
+                if (!MeetsPrerequisites(player, definition))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }
