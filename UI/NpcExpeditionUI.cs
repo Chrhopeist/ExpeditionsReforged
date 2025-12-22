@@ -136,7 +136,7 @@ public class NpcExpeditionUI : UIState
         var registry = ModContent.GetInstance<ExpeditionRegistry>();
 
         List<ExpeditionDefinition> available = registry.Definitions
-            .Where(definition => definition.QuestGiverNpcId == _questGiverNpcType)
+            // Availability is based solely on player state; quest giver usage is handled elsewhere (turn-in/icons).
             .Where(definition => IsAvailableForPlayer(definition, player))
             .OrderBy(definition => definition.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -167,7 +167,7 @@ public class NpcExpeditionUI : UIState
 
     private bool IsAvailableForPlayer(ExpeditionDefinition definition, ExpeditionsPlayer player)
     {
-        // Only show expeditions the player can actually accept from this quest giver.
+        // Only show expeditions the player can actually accept based on current progression.
         if (player.IsExpeditionActive(definition.Id))
         {
             return false;
