@@ -306,6 +306,7 @@ Color = Color.Gray
 _npcHeadButton.Width.Set(Scale(18f), 0f);
 _npcHeadButton.Height.Set(Scale(18f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
+_npcHeadButton.OnRightClick += (_, _) => CycleNpcFilter(-1);
 AddTooltip(_npcHeadButton, "Cycle NPC head filter");
 filterRow.Append(_npcHeadButton);
 
@@ -1008,6 +1009,12 @@ RequestExpeditionListRefresh();
 
 private void CycleNpcHead()
 {
+// Preserve existing forward cycling logic for left-click.
+CycleNpcFilter(1);
+}
+
+private void CycleNpcFilter(int direction)
+{
 if (_questGiverNpcIds.Count == 0)
 {
 _filterQuestGiverNpcId = null;
@@ -1016,16 +1023,17 @@ RequestExpeditionListRefresh();
 return;
 }
 
-if (!_filterQuestGiverNpcId.HasValue)
+int totalSlots = _questGiverNpcIds.Count + 1;
+int currentIndex = _filterQuestGiverNpcId.HasValue
+? _questGiverNpcIds.IndexOf(_filterQuestGiverNpcId.Value)
+: _questGiverNpcIds.Count;
+int nextIndex = (currentIndex + direction) % totalSlots;
+if (nextIndex < 0)
 {
-_filterQuestGiverNpcId = _questGiverNpcIds.First();
+nextIndex += totalSlots;
 }
-else
-{
-int currentIndex = _questGiverNpcIds.IndexOf(_filterQuestGiverNpcId.Value);
-int nextIndex = (currentIndex + 1) % (_questGiverNpcIds.Count + 1);
+
 _filterQuestGiverNpcId = nextIndex >= _questGiverNpcIds.Count ? null : _questGiverNpcIds[nextIndex];
-}
 
 UpdateNpcHeadTexture();
 RequestExpeditionListRefresh();
