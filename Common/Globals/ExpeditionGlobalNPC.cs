@@ -10,20 +10,34 @@ namespace ExpeditionsReforged.Common.Globals
 {
     public class ExpeditionGlobalNPC : GlobalNPC
     {
-        public override void SetChatButtons(NPC npc, ref string button, ref string button2)
+        public override void ModifyChatButtons(NPC npc, List<string> buttons)
         {
             if (!ShouldShowExpeditionButton(npc, Main.LocalPlayer))
             {
                 return;
             }
 
-            // Follow the ExampleMod pattern by using the second chat button for the expedition UI.
-            button2 = "Expedition";
+            // Use the second chat button slot for the expedition UI, mirroring the legacy behavior.
+            if (buttons.Count == 1)
+            {
+                buttons.Add("Expedition");
+                return;
+            }
+
+            if (buttons.Count > 1)
+            {
+                buttons[1] = "Expedition";
+            }
         }
 
-        public override void OnChatButtonClicked(NPC npc, bool firstButton)
+        public override void OnChatButtonClicked(NPC npc, int button, ref bool shop)
         {
-            if (firstButton || Main.netMode == NetmodeID.Server)
+            if (Main.netMode == NetmodeID.Server)
+            {
+                return;
+            }
+
+            if (button != 1)
             {
                 return;
             }
@@ -33,7 +47,7 @@ namespace ExpeditionsReforged.Common.Globals
                 return;
             }
 
-            // NPC chat buttons are client-side UI actions; opening the UI is safe here.
+            // NPC chat buttons are client-side UI actions; opening the UI stays client-only.
             ModContent.GetInstance<ExpeditionsSystem>().OpenNpcExpeditionUI(npc.type);
         }
 
