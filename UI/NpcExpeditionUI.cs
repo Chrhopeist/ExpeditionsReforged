@@ -38,14 +38,14 @@ public class NpcExpeditionUI : UIState
         };
 
         _rootPanel.SetPadding(12f);
-        _rootPanel.Width.Set(520f, 0f);
+        _rootPanel.Width.Set(570f, 0f);
         _rootPanel.Height.Set(420f, 0f);
         _rootPanel.HAlign = 0.5f;
         _rootPanel.VAlign = 0.5f;
 
         Append(_rootPanel);
 
-        var title = new UIText("Available Expeditions", 0.95f, true)
+        var title = new UIText("Available Expeditions", 0.9f, true)
         {
             HAlign = 0f,
             VAlign = 0f
@@ -214,7 +214,7 @@ public class NpcExpeditionUI : UIState
 
         private void BuildEntryContents()
         {
-            var nameText = new UIText(_definition.DisplayName, 0.9f, true)
+            var nameText = new UIText(_definition.DisplayName, 0.85f, true)
             {
                 HAlign = 0f,
                 VAlign = 0f
@@ -282,10 +282,10 @@ public class NpcExpeditionUI : UIState
 
         private static UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)
         {
-            var button = new UITextPanel<string>(label, 0.8f, true)
+            var button = new UITextPanel<string>(label, 0.7f, true)
             {
-                Width = StyleDimension.FromPixels(110f),
-                Height = StyleDimension.FromPixels(32f),
+                Width = StyleDimension.FromPixels(95f),
+                Height = StyleDimension.FromPixels(28f),
                 BackgroundColor = enabled ? new Color(80, 104, 192) : new Color(60, 60, 60),
                 BorderColor = enabled ? new Color(110, 140, 220) : new Color(90, 90, 90),
                 TextColor = enabled ? Color.White : Color.Gray
