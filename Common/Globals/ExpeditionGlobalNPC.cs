@@ -8,7 +8,8 @@ namespace ExpeditionsReforged.Common.Globals
 {
     public class ExpeditionGlobalNPC : GlobalNPC
     {
-        public override void OnChat(NPC npc)
+        // GetChat is used only as a turn-in trigger; the chat text is intentionally untouched.
+        public override void GetChat(NPC npc, ref string chat)
         {
             Player player = null;
 
@@ -58,8 +59,9 @@ namespace ExpeditionsReforged.Common.Globals
 
                 if (Main.netMode == NetmodeID.MultiplayerClient)
                 {
+                    // Client only requests the turn-in; the server performs validation and rewards.
                     ExpeditionsReforged.RequestNpcTurnIn(progress.ExpeditionId, npc.type);
-                    continue;
+                    return;
                 }
 
                 if (expeditionsPlayer.TryTurnInExpedition(progress.ExpeditionId, npc.type))
