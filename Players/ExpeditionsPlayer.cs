@@ -18,6 +18,8 @@ namespace ExpeditionsReforged.Players
         // client UI should only read this state and use the dedicated request packets to ask the server to mutate it.
         public bool ExpeditionUIOpen;
         public bool TrackerUIOpen;
+        // Client-only flag to keep the NPC expedition list UI open while chatting.
+        public bool NpcExpeditionUIOpen;
 
         // Optional client-facing selection. The actual expedition state remains server-authoritative.
         public string TrackedExpeditionId { get; private set; } = string.Empty;
@@ -61,6 +63,7 @@ namespace ExpeditionsReforged.Players
         {
             ExpeditionUIOpen = false;
             TrackerUIOpen = false;
+            NpcExpeditionUIOpen = false;
             TrackedExpeditionId = string.Empty;
 
             _lastDaytime = Main.dayTime;
@@ -82,6 +85,7 @@ namespace ExpeditionsReforged.Players
         {
             ExpeditionUIOpen = false;
             TrackerUIOpen = false;
+            NpcExpeditionUIOpen = false;
             TrackedExpeditionId = string.Empty;
             _expeditionProgressEntries.Clear();
             _progressByExpeditionId.Clear();
