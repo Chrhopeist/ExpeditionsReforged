@@ -67,11 +67,8 @@ public class ExpeditionChatNPC : ModNPC
 
     public override void SetChatButtons(ref string button, ref string button2)
     {
-        // Only show the expedition button if this NPC can offer expeditions for the local player.
-        if (Main.LocalPlayer != null && ExpeditionService.IsExpeditionGiver(NPC.type, Main.LocalPlayer))
-        {
-            button2 = "Expedition";
-        }
+        // Always show the expedition button when chatting with the coordinator.
+        button2 = "Expedition";
     }
 
     public override void OnChatButtonClicked(bool firstButton, ref string shop)
