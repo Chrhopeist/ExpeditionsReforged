@@ -82,8 +82,8 @@ private const float FilterRowHeightPixels = 32f;
 private const float FilterRowPaddingPixels = 6f;
 // Top-row filter buttons are intentionally compact so the header is unobtrusive.
 private const float FilterButtonHeightPixels = 16f;
-// Tighten horizontal spacing so the top control strip stays on one line at 1024x768.
-private const float FilterButtonPaddingPixels = 4f;
+// Keep consistent breathing room between top-row controls without relying on hardcoded offsets.
+private const float FilterButtonSpacingPixels = 8f;
 
 public override void OnInitialize()
 {
@@ -341,7 +341,7 @@ _sortDirectionButton);
 private void LayoutControlsRow(UIElement row, params UIElement[] children)
 {
 // Manually lay out controls so they stay on one row and shrink buttons as needed.
-float spacing = Scale(FilterButtonPaddingPixels);
+float spacing = Scale(FilterButtonSpacingPixels);
 row.Recalculate();
 float rowWidth = row.GetInnerDimensions().Width;
 
@@ -420,6 +420,7 @@ resolvedButtonWidths[pair.Key] = Math.Max(minButtonWidth, currentWidth - reducti
 }
 }
 
+// Use a shared cursor so spacing stays consistent as widths change.
 float x = 0f;
 foreach (UIElement element in children)
 {
