@@ -77,7 +77,8 @@ private const float MinUiScale = 0.85f;
 private const float MaxUiScale = 1f;
 private const float ListPanelWidthPixels = 320f;
 private const float DetailsFooterHeightPixels = 42f;
-private const float FilterBarHeightPixels = 118f;
+// Two compact header rows with light padding to keep the window title area tight.
+private const float FilterBarHeightPixels = 82f;
 private const float FilterRowHeightPixels = 32f;
 private const float FilterRowPaddingPixels = 6f;
 // Top-row filter buttons are intentionally compact so the header is unobtrusive.
@@ -261,27 +262,39 @@ _rootPanel.Append(_bodyContainer);
 
 private void BuildControls(UIElement controlsBar)
 {
-// Build a single-row control strip to keep every filter in one horizontal band.
-var topControlsRow = new UIElement
+// Split the header into two rows so filters and sorting controls stay readable.
+float rowHeight = Scale(FilterRowHeightPixels);
+float rowPadding = Scale(FilterRowPaddingPixels);
+
+var filterRow = new UIElement
 {
 Width = StyleDimension.FromPercent(1f),
-Height = StyleDimension.FromPixels(Scale(FilterRowHeightPixels)),
-VAlign = 0.5f
+Height = StyleDimension.FromPixels(rowHeight),
+Top = StyleDimension.FromPixels(rowPadding)
 };
 
-topControlsRow.SetPadding(0f);
-controlsBar.Append(topControlsRow);
+var sortRow = new UIElement
+{
+Width = StyleDimension.FromPercent(1f),
+Height = StyleDimension.FromPixels(rowHeight),
+Top = StyleDimension.FromPixels(rowPadding + rowHeight + rowPadding)
+};
+
+filterRow.SetPadding(0f);
+sortRow.SetPadding(0f);
+controlsBar.Append(filterRow);
+controlsBar.Append(sortRow);
 
 var categoryLabel = CreateFilterLabel("Category:", 65f);
-topControlsRow.Append(categoryLabel);
+filterRow.Append(categoryLabel);
 
 _categoryButton = CreateFilterButton(_selectedCategory, 55f);
 _categoryButton.OnLeftClick += (_, _) => CycleCategory();
 AddTooltip(_categoryButton, "Cycle expedition categories");
-topControlsRow.Append(_categoryButton);
+filterRow.Append(_categoryButton);
 
 var npcLabel = CreateFilterLabel("NPC:", 35f);
-topControlsRow.Append(npcLabel);
+filterRow.Append(npcLabel);
 
 _npcHeadButton = new UIImage(TextureAssets.MagicPixel)
 {
@@ -294,45 +307,48 @@ _npcHeadButton.Width.Set(Scale(18f), 0f);
 _npcHeadButton.Height.Set(Scale(18f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
 AddTooltip(_npcHeadButton, "Cycle NPC head filter");
-topControlsRow.Append(_npcHeadButton);
+filterRow.Append(_npcHeadButton);
 
 _completionButton = CreateFilterButton(_completionFilter.ToString(), 55f);
 _completionButton.OnLeftClick += (_, _) => CycleCompletionFilter();
 AddTooltip(_completionButton, "Filter by availability/active/completed");
-topControlsRow.Append(_completionButton);
+filterRow.Append(_completionButton);
 
 _repeatableButton = CreateFilterButton("Repeatable: Any", 55f);
 _repeatableButton.OnLeftClick += (_, _) => ToggleRepeatable();
 AddTooltip(_repeatableButton, "Toggle showing only repeatable expeditions");
-topControlsRow.Append(_repeatableButton);
+filterRow.Append(_repeatableButton);
 
 _trackedFilterButton = CreateFilterButton("Tracked: Any", 55f);
 _trackedFilterButton.OnLeftClick += (_, _) => ToggleTrackedFilter();
 AddTooltip(_trackedFilterButton, "Toggle showing only tracked expedition");
-topControlsRow.Append(_trackedFilterButton);
+filterRow.Append(_trackedFilterButton);
 
 var sortLabel = CreateFilterLabel("Sort:", 35f);
-topControlsRow.Append(sortLabel);
+sortRow.Append(sortLabel);
 
 _sortButton = CreateFilterButton(_sortMode.ToString(), 50f);
 _sortButton.OnLeftClick += (_, _) => CycleSortMode();
 AddTooltip(_sortButton, "Cycle sorting mode");
-topControlsRow.Append(_sortButton);
+sortRow.Append(_sortButton);
 
 _sortDirectionButton = CreateFilterButton(_sortAscending ? "Ascending" : "Descending", 50f);
 _sortDirectionButton.OnLeftClick += (_, _) => ToggleSortDirection();
 AddTooltip(_sortDirectionButton, "Toggle ascending/descending");
-topControlsRow.Append(_sortDirectionButton);
+sortRow.Append(_sortDirectionButton);
 
 LayoutControlsRow(
-topControlsRow,
+filterRow,
 categoryLabel,
 _categoryButton,
 npcLabel,
 _npcHeadButton,
 _completionButton,
 _repeatableButton,
-_trackedFilterButton,
+_trackedFilterButton);
+
+LayoutControlsRow(
+sortRow,
 sortLabel,
 _sortButton,
 _sortDirectionButton);
