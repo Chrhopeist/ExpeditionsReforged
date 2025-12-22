@@ -80,7 +80,8 @@ private const float DetailsFooterHeightPixels = 42f;
 private const float FilterBarHeightPixels = 118f;
 private const float FilterRowHeightPixels = 32f;
 private const float FilterRowPaddingPixels = 6f;
-private const float FilterButtonHeightPixels = 32f;
+// Top-row filter buttons are intentionally compact so the header is unobtrusive.
+private const float FilterButtonHeightPixels = 16f;
 // Tighten horizontal spacing so the top control strip stays on one line at 1024x768.
 private const float FilterButtonPaddingPixels = 4f;
 
@@ -274,7 +275,7 @@ controlsBar.Append(topControlsRow);
 var categoryLabel = CreateFilterLabel("Category:", 65f);
 topControlsRow.Append(categoryLabel);
 
-_categoryButton = CreateFilterButton(_selectedCategory, 110f);
+_categoryButton = CreateFilterButton(_selectedCategory, 55f);
 _categoryButton.OnLeftClick += (_, _) => CycleCategory();
 AddTooltip(_categoryButton, "Cycle expedition categories");
 topControlsRow.Append(_categoryButton);
@@ -289,23 +290,23 @@ VAlign = 0.5f,
 Color = Color.Gray
 };
 
-_npcHeadButton.Width.Set(Scale(36f), 0f);
-_npcHeadButton.Height.Set(Scale(36f), 0f);
+_npcHeadButton.Width.Set(Scale(18f), 0f);
+_npcHeadButton.Height.Set(Scale(18f), 0f);
 _npcHeadButton.OnLeftClick += (_, _) => CycleNpcHead();
 AddTooltip(_npcHeadButton, "Cycle NPC head filter");
 topControlsRow.Append(_npcHeadButton);
 
-_completionButton = CreateFilterButton(_completionFilter.ToString(), 110f);
+_completionButton = CreateFilterButton(_completionFilter.ToString(), 55f);
 _completionButton.OnLeftClick += (_, _) => CycleCompletionFilter();
 AddTooltip(_completionButton, "Filter by availability/active/completed");
 topControlsRow.Append(_completionButton);
 
-_repeatableButton = CreateFilterButton("Repeatable: Any", 110f);
+_repeatableButton = CreateFilterButton("Repeatable: Any", 55f);
 _repeatableButton.OnLeftClick += (_, _) => ToggleRepeatable();
 AddTooltip(_repeatableButton, "Toggle showing only repeatable expeditions");
 topControlsRow.Append(_repeatableButton);
 
-_trackedFilterButton = CreateFilterButton("Tracked: Any", 110f);
+_trackedFilterButton = CreateFilterButton("Tracked: Any", 55f);
 _trackedFilterButton.OnLeftClick += (_, _) => ToggleTrackedFilter();
 AddTooltip(_trackedFilterButton, "Toggle showing only tracked expedition");
 topControlsRow.Append(_trackedFilterButton);
@@ -313,12 +314,12 @@ topControlsRow.Append(_trackedFilterButton);
 var sortLabel = CreateFilterLabel("Sort:", 35f);
 topControlsRow.Append(sortLabel);
 
-_sortButton = CreateFilterButton(_sortMode.ToString(), 100f);
+_sortButton = CreateFilterButton(_sortMode.ToString(), 50f);
 _sortButton.OnLeftClick += (_, _) => CycleSortMode();
 AddTooltip(_sortButton, "Cycle sorting mode");
 topControlsRow.Append(_sortButton);
 
-_sortDirectionButton = CreateFilterButton(_sortAscending ? "Ascending" : "Descending", 100f);
+_sortDirectionButton = CreateFilterButton(_sortAscending ? "Ascending" : "Descending", 50f);
 _sortDirectionButton.OnLeftClick += (_, _) => ToggleSortDirection();
 AddTooltip(_sortDirectionButton, "Toggle ascending/descending");
 topControlsRow.Append(_sortDirectionButton);
@@ -344,18 +345,18 @@ float spacing = Scale(FilterButtonPaddingPixels);
 row.Recalculate();
 float rowWidth = row.GetInnerDimensions().Width;
 
-float minButtonWidth = Scale(80f);
-float npcHeadWidth = _npcHeadButton?.Width.Pixels ?? Scale(36f);
-float npcHeadHeight = _npcHeadButton?.Height.Pixels ?? Scale(36f);
+float minButtonWidth = Scale(40f);
+float npcHeadWidth = _npcHeadButton?.Width.Pixels ?? Scale(18f);
+float npcHeadHeight = _npcHeadButton?.Height.Pixels ?? Scale(18f);
 
 var preferredWidths = new Dictionary<UIElement, float>
 {
-{ _categoryButton, Scale(110f) },
-{ _completionButton, Scale(110f) },
-{ _repeatableButton, Scale(110f) },
-{ _trackedFilterButton, Scale(110f) },
-{ _sortButton, Scale(100f) },
-{ _sortDirectionButton, Scale(100f) }
+{ _categoryButton, Scale(55f) },
+{ _completionButton, Scale(55f) },
+{ _repeatableButton, Scale(55f) },
+{ _trackedFilterButton, Scale(55f) },
+{ _sortButton, Scale(50f) },
+{ _sortDirectionButton, Scale(50f) }
 };
 
 float fixedWidth = 0f;
@@ -461,7 +462,7 @@ return label;
 
 private UITextPanel<string> CreateFilterButton(string text, float widthPixels)
 {
-var button = new UITextPanel<string>(text, 0.9f * _uiScale, true)
+var button = new UITextPanel<string>(text, 0.45f * _uiScale, true)
 {
 HAlign = 0f,
 VAlign = 0.5f,
