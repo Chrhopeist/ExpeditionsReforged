@@ -19,6 +19,11 @@
         "Forest": "Forest",
         "Desert": "Desert",
         "Dungeon": "Dungeon"
+      },
+      "NPCs": {
+        "ExpeditionChatNPC": {
+          "DisplayName": "Expedition Coordinator"
+        }
       }
     }
   }
