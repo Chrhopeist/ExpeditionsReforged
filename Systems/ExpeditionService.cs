@@ -111,5 +111,56 @@ namespace ExpeditionsReforged.Systems
 
             return true;
         }
+
+        /// <summary>
+        /// Determines whether the provided NPC can offer expeditions to the specified player.
+        /// This is a client-safe query that does not mutate any gameplay state.
+        /// </summary>
+        /// <param name="npcType">The NPC type to evaluate.</param>
+        /// <param name="player">The player interacting with the NPC.</param>
+        /// <returns>True if at least one expedition is available from this NPC; otherwise false.</returns>
+        public static bool IsExpeditionGiver(int npcType, Player player)
+        {
+            if (player == null || npcType < 0)
+            {
+                return false;
+            }
+
+            ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
+            if (expeditionsPlayer == null)
+            {
+                return false;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+
+            foreach (ExpeditionDefinition definition in registry.Definitions)
+            {
+                if (definition.QuestGiverNpcId != npcType)
+                {
+                    continue;
+                }
+
+                // Match the NPC expedition list filters so the button only appears when something is available.
+                if (expeditionsPlayer.IsExpeditionActive(definition.Id))
+                {
+                    continue;
+                }
+
+                if (!definition.IsRepeatable && expeditionsPlayer.IsExpeditionCompleted(definition.Id))
+                {
+                    continue;
+                }
+
+                if (!MeetsPrerequisites(player, definition))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }
