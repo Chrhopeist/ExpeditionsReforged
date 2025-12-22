@@ -83,7 +83,7 @@ private const float FilterRowPaddingPixels = 6f;
 // Top-row filter buttons are intentionally compact so the header is unobtrusive.
 private const float FilterButtonHeightPixels = 16f;
 // Keep consistent breathing room between top-row controls without relying on hardcoded offsets.
-private const float FilterButtonSpacingPixels = 8f;
+private const float FilterButtonSpacingPixels = 32f;
 
 public override void OnInitialize()
 {
