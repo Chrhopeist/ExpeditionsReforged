@@ -51,6 +51,7 @@ private RarityScrollbarMarkers _rarityMarkers = null!;
 private UIPanel _detailsPanel = null!;
 private UIList _detailsList = null!;
 private UIText _detailsPlaceholder = null!;
+private string _detailsPlaceholderText = "Select an expedition to view its details.";
 
 private readonly List<ExpeditionListEntry> _entries = new();
 private readonly List<string> _categories = new();
@@ -547,7 +548,34 @@ _expeditionList.Clear();
 _entries.Clear();
 
 var registry = ModContent.GetInstance<ExpeditionRegistry>();
-var definitions = registry.Definitions.AsEnumerable();
+// Build the source list from the player's accepted expeditions, skipping orphaned progress entries.
+List<ExpeditionDefinition> acceptedDefinitions = new();
+foreach (ExpeditionProgress progress in player.ExpeditionProgressEntries)
+{
+if (progress == null || string.IsNullOrWhiteSpace(progress.ExpeditionId))
+{
+continue;
+}
+
+if (registry.TryGetExpedition(progress.ExpeditionId, out ExpeditionDefinition definition))
+{
+acceptedDefinitions.Add(definition);
+}
+}
+
+bool hasAcceptedExpeditions = acceptedDefinitions.Count > 0;
+_detailsPlaceholderText = hasAcceptedExpeditions
+? "Select an expedition to view its details."
+// Use a clearer empty state when the player has not accepted any expeditions.
+: "No accepted expeditions.";
+
+if (_detailsPlaceholder?.Parent != null)
+{
+// Keep the placeholder message in sync when the accepted list changes.
+_detailsPlaceholder.SetText(_detailsPlaceholderText);
+}
+
+var definitions = acceptedDefinitions.AsEnumerable();
 
 if (!string.Equals(_selectedCategory, "All", StringComparison.OrdinalIgnoreCase))
 {
@@ -595,6 +623,14 @@ _expeditionList.Add(entry);
 }
 
 _rarityMarkers.SetEntries(_entries.Select(entry => (entry.View, entry.Height.Pixels + _expeditionList.ListPadding)).ToList());
+
+if (!hasAcceptedExpeditions)
+{
+// Clear any stale selection details when there are no accepted expeditions.
+_selectedExpeditionId = string.Empty;
+ShowPlaceholder();
+}
+
 return true;
 }
 
@@ -615,7 +651,7 @@ Height = StyleDimension.FromPercent(1f),
 ListPadding = Scale(4f)
 };
 
-_detailsPlaceholder = new UIText("Select an expedition to view its details.", 0.9f * _uiScale)
+_detailsPlaceholder = new UIText(_detailsPlaceholderText, 0.9f * _uiScale)
 {
 HAlign = 0f,
 VAlign = 0f
@@ -676,7 +712,7 @@ _detailsPlaceholder.Top.Set(Scale(4f), 0f);
 _detailsListContainer.Append(_detailsPlaceholder);
 }
 
-_detailsPlaceholder.SetText("Select an expedition to view its details.");
+_detailsPlaceholder.SetText(_detailsPlaceholderText);
 _detailsButtonRow.RemoveAllChildren();
 }
 
