@@ -103,6 +103,16 @@ namespace ExpeditionsReforged
                     }
 
                     break;
+
+                case ExpeditionPacketType.TurnInExpedition:
+                    if (Main.netMode == NetmodeID.Server)
+                    {
+                        string expeditionId = reader.ReadString();
+                        int npcType = reader.ReadInt32();
+                        HandleTurnIn(expeditionId, npcType, whoAmI);
+                    }
+
+                    break;
             }
         }
 
@@ -188,6 +198,20 @@ namespace ExpeditionsReforged
             packet.Send();
         }
 
+        internal static void RequestNpcTurnIn(string expeditionId, int npcType)
+        {
+            if (Main.netMode != NetmodeID.MultiplayerClient || Instance is null)
+            {
+                return;
+            }
+
+            ModPacket packet = Instance.GetPacket();
+            packet.Write((byte)ExpeditionPacketType.TurnInExpedition);
+            packet.Write(expeditionId ?? string.Empty);
+            packet.Write(npcType);
+            packet.Send();
+        }
+
         private void HandleStartRequest(string expeditionId, int sender)
         {
             Player player = Main.player[sender];
@@ -238,6 +262,16 @@ namespace ExpeditionsReforged
             Player player = Main.player[sender];
             ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
             if (expeditionsPlayer.TryTrackExpedition(expeditionId))
+            {
+                SendProgressSync(-1, player.whoAmI, expeditionsPlayer);
+            }
+        }
+
+        private void HandleTurnIn(string expeditionId, int npcType, int sender)
+        {
+            Player player = Main.player[sender];
+            ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
+            if (expeditionsPlayer.TryTurnInExpedition(expeditionId, npcType))
             {
                 SendProgressSync(-1, player.whoAmI, expeditionsPlayer);
             }

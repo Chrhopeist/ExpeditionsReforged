@@ -4,8 +4,11 @@ using System.IO;
 using System.Linq;
 using ExpeditionsReforged.Content.Expeditions;
 using ExpeditionsReforged.Systems;
+using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Chat;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 
@@ -197,6 +200,11 @@ namespace ExpeditionsReforged.Players
                 if (rewardsClaimed)
                 {
                     progress.ClaimRewards();
+                }
+                else if (isCompleted)
+                {
+                    // Keep completed expeditions active until rewards are turned in.
+                    progress.IsActive = true;
                 }
 
                 if (expeditionTag.TryGet("conditions", out TagCompound savedConditions) && savedConditions is not null)
@@ -424,6 +432,66 @@ namespace ExpeditionsReforged.Players
 
             progress.ClaimRewards();
             return true;
+        }
+
+        /// <summary>
+        /// Attempts to turn in an expedition at its quest-giver NPC. Server-authoritative and multiplayer-safe.
+        /// </summary>
+        public bool TryTurnInExpedition(string expeditionId, int npcType)
+        {
+            if (string.IsNullOrWhiteSpace(expeditionId))
+            {
+                return false;
+            }
+
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+            {
+                ExpeditionsReforged.RequestNpcTurnIn(expeditionId, npcType);
+                return false;
+            }
+
+            if (!TryGetExpeditionProgress(expeditionId, out ExpeditionProgress progress)
+                || progress.IsOrphaned
+                || !progress.IsActive
+                || !progress.IsCompleted
+                || progress.RewardsClaimed)
+            {
+                return false;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            if (!registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
+            {
+                return false;
+            }
+
+            if (definition.QuestGiverNpcId != npcType)
+            {
+                return false;
+            }
+
+            if (!ExpeditionRewardService.TryPayCompletionRewards(Player, definition))
+            {
+                Mod.Logger.Warn($"Failed to pay rewards for expedition '{expeditionId}' on player {Player.name}. Turn-in aborted.");
+                return false;
+            }
+
+            progress.ClaimRewards();
+            SendTurnInFeedback();
+            return true;
+        }
+
+        private void SendTurnInFeedback()
+        {
+            string key = Mod.GetLocalizationKey("Messages.ExpeditionCompleted");
+            if (Main.netMode == NetmodeID.SinglePlayer)
+            {
+                Main.NewText(Language.GetTextValue(key), new Color(90, 220, 140));
+            }
+            else if (Main.netMode == NetmodeID.Server)
+            {
+                ChatHelper.SendChatMessageToClient(NetworkText.FromKey(key), new Color(90, 220, 140), Player.whoAmI);
+            }
         }
 
         public void ReportConditionProgress(string conditionId, int amount)

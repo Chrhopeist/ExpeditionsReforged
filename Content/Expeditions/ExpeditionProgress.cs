@@ -54,7 +54,7 @@ namespace ExpeditionsReforged.Content.Expeditions
         /// </summary>
         public void Complete()
         {
-            IsActive = false;
+            // Keep the expedition active until rewards are claimed so turn-in NPC logic can verify ownership.
             IsCompleted = true;
         }
 
@@ -64,6 +64,8 @@ namespace ExpeditionsReforged.Content.Expeditions
         public void ClaimRewards()
         {
             RewardsClaimed = true;
+            // Once rewards are claimed, the expedition no longer participates in active gameplay.
+            IsActive = false;
         }
 
         /// <summary>
