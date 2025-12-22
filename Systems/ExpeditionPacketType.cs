@@ -8,6 +8,7 @@ namespace ExpeditionsReforged.Systems
         ConditionProgress,
         CompleteExpedition,
         ClaimRewards,
-        TrackExpedition
+        TrackExpedition,
+        TurnInExpedition
     }
 }
