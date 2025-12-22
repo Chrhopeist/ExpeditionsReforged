@@ -75,14 +75,17 @@ namespace ExpeditionsReforged.Systems
                 return false;
             }
 
-            // TODO: Enforce MinPlayerLevel once a player progression system exists.
-            // For now, MinPlayerLevel is defined on the expedition but not validated here.
-            // When a level system is implemented, add:
-            // if (player.GetPlayerLevel() < definition.MinPlayerLevel)
-            // {
-            //     failReasonKey = "Mods.ExpeditionsReforged.Errors.LevelTooLow";
-            //     return false;
-            // }
+            if (!MeetsProgressionRequirement(player, definition))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.ProgressionTooLow";
+                return false;
+            }
+
+            if (!MeetsPrerequisites(player, definition))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.PrerequisitesNotMet";
+                return false;
+            }
 
             // Server-authoritative state mutation: start the expedition
             expeditionsPlayer.StartExpedition(expeditionId, Main.GameUpdateCount);
@@ -104,12 +107,68 @@ namespace ExpeditionsReforged.Systems
                 return false;
             }
 
-            // TODO: Implement prerequisite validation once condition tracking is wired.
-            // For now, all prerequisites are assumed satisfied to allow testing.
-            // When conditions are implemented, iterate definition.Prerequisites and check
-            // against ExpeditionsPlayer's condition state or world state as appropriate.
+            // Prerequisite validation will leverage expedition condition tracking once those
+            // condition entries are surfaced to the UI and server validation flow.
 
             return true;
+        }
+
+        /// <summary>
+        /// Determines whether the player meets the progression tier required by the expedition.
+        /// Uses Terraria world progression flags as the current stand-in for expedition tiers.
+        /// </summary>
+        public static bool MeetsProgressionRequirement(Player player, ExpeditionDefinition definition)
+        {
+            if (player == null || definition == null)
+            {
+                return false;
+            }
+
+            int requiredTier = Math.Max(1, definition.MinPlayerLevel);
+            int currentTier = GetWorldProgressionTier();
+            return currentTier >= requiredTier;
+        }
+
+        private static int GetWorldProgressionTier()
+        {
+            int tier = 1;
+
+            if (NPC.downedBoss1)
+            {
+                tier = Math.Max(tier, 2);
+            }
+
+            if (NPC.downedBoss2 || NPC.downedBoss3)
+            {
+                tier = Math.Max(tier, 3);
+            }
+
+            if (Main.hardMode)
+            {
+                tier = Math.Max(tier, 4);
+            }
+
+            if (NPC.downedMechBoss1 || NPC.downedMechBoss2 || NPC.downedMechBoss3)
+            {
+                tier = Math.Max(tier, 5);
+            }
+
+            if (NPC.downedPlantBoss)
+            {
+                tier = Math.Max(tier, 6);
+            }
+
+            if (NPC.downedGolemBoss)
+            {
+                tier = Math.Max(tier, 7);
+            }
+
+            if (NPC.downedMoonlord)
+            {
+                tier = Math.Max(tier, 8);
+            }
+
+            return tier;
         }
 
         /// <summary>

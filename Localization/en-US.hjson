@@ -24,6 +24,17 @@
         "ExpeditionChatNPC": {
           "DisplayName": "Expedition Coordinator"
         }
+      },
+      "Errors": {
+        "ClientCannotStart": "Clients cannot start expeditions directly.",
+        "InvalidExpeditionId": "That expedition could not be found.",
+        "InvalidPlayer": "The player data is invalid.",
+        "PlayerDataMissing": "Player expedition data is missing.",
+        "ExpeditionNotFound": "That expedition does not exist.",
+        "AlreadyActive": "That expedition is already active.",
+        "AlreadyCompleted": "That expedition has already been completed.",
+        "ProgressionTooLow": "Your progression is too low for that expedition.",
+        "PrerequisitesNotMet": "You do not meet the prerequisites for that expedition."
       }
     }
   }

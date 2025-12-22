@@ -328,6 +328,17 @@ namespace ExpeditionsReforged.Players
                 return false;
             }
 
+            // Validate progression/prerequisite gates on the server before starting the expedition.
+            if (!ExpeditionService.MeetsProgressionRequirement(Player, definition))
+            {
+                return false;
+            }
+
+            if (!ExpeditionService.MeetsPrerequisites(Player, definition))
+            {
+                return false;
+            }
+
             ExpeditionProgress progress = GetOrCreateProgress(definition);
             progress.IsOrphaned = false;
             progress.IsActive = true;

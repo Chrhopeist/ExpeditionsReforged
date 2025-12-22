@@ -178,6 +178,11 @@ public class NpcExpeditionUI : UIState
             return false;
         }
 
+        if (!ExpeditionService.MeetsProgressionRequirement(player.Player, definition))
+        {
+            return false;
+        }
+
         return ExpeditionService.MeetsPrerequisites(player.Player, definition);
     }
 
@@ -263,6 +268,16 @@ public class NpcExpeditionUI : UIState
             acceptButton.Left.Set(380f, 0f);
             acceptButton.Top.Set(40f, 0f);
             Append(acceptButton);
+
+            var rejectButton = CreateActionButton("Reject", true, () =>
+            {
+                // Closing the NPC expedition UI is client-only and does not mutate server state.
+                _player.NpcExpeditionUIOpen = false;
+            });
+
+            rejectButton.Left.Set(380f, 0f);
+            rejectButton.Top.Set(80f, 0f);
+            Append(rejectButton);
         }
 
         private static UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)
