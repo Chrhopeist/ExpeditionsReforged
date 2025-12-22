@@ -28,6 +28,7 @@ public class ExpeditionChatNPC : ModNPC
     public override void SetDefaults()
     {
         NPC.friendly = true;
+        NPC.townNPC = true;
         NPC.width = 18;
         NPC.height = 40;
         NPC.aiStyle = NPCAIStyleID.Passive;
@@ -52,17 +53,6 @@ public class ExpeditionChatNPC : ModNPC
     {
         // Provide a consistent name for the coordinator.
         return new List<string> { "Expedition Coordinator" };
-    }
-
-    public override float SpawnChance(NPCSpawnInfo spawnInfo)
-    {
-        // Spawn the coordinator on the surface in peaceful conditions if one is not already present.
-        if (NPC.AnyNPCs(Type) || !spawnInfo.Player.ZoneOverworldHeight)
-        {
-            return 0f;
-        }
-
-        return 0.08f;
     }
 
     public override void SetChatButtons(ref string button, ref string button2)
