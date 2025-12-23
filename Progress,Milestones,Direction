@@ -1,0 +1,91 @@
+📌 ExpeditionsReforged — Major Milestones So Far
+
+Migrated Expeditions from Hardcoded C# to Data-Driven JSON
+
+Expeditions are now defined externally (via Excel → Python exporter → JSON).
+
+The mod loads expedition definitions at runtime, enabling rapid iteration and future modpack compatibility.
+
+Established a Server-Authoritative Expedition System
+
+All expedition state changes (start, progress, completion, reward payout) are validated and executed on the server.
+
+Clients only request actions; they never mutate expedition state directly.
+
+Built a Full Custom Expeditions UI (UIState-based)
+
+Multi-panel UI with expedition list, details panel, filters, sorting, and tracking.
+
+Scales with resolution and avoids vanilla UI limitations.
+
+Implemented Robust Expedition Progress Tracking
+
+Per-player expedition progress with:
+
+Active / completed / orphaned states
+
+Condition tracking
+
+Stable per-player progress keys
+
+Supports repeatable and non-repeatable expeditions cleanly.
+
+Replaced Player Level Gating with World Progression Tiers
+
+Expeditions unlock based on Terraria world progression (boss kills, Hardmode, etc.).
+
+Progression checks are enforced both in UI filtering and server validation.
+
+Separated Expedition Acceptance from Expedition Turn-In
+
+Expeditions are accepted via UI
+
+Expeditions are completed / rewarded by talking to the quest-giver NPC
+
+This aligns with Terraria’s NPC-driven gameplay loop.
+
+Implemented NPC-Based Turn-In via GlobalNPC
+
+Talking to the correct NPC automatically turns in completed expeditions.
+
+Rewards are paid immediately on interaction, with multiplayer-safe sync.
+
+Removed Dependence on a Dedicated “Quest Giver” NPC
+
+Although a Coordinator NPC was prototyped, the architecture now supports:
+
+Real NPC ownership of quests
+
+Quest completion triggered by interacting with the owning NPC
+
+This enables a more natural vanilla feel.
+
+Integrated (or Prepared for) DialogueTweak / Dialogue Panel Rework
+
+Moved toward adding an “Expedition” button to NPC chat without replacing vanilla buttons.
+
+Avoids the 2-button limitation and supports per-NPC expedition access.
+
+Hardened UI Interaction & Input Handling
+
+Added ESC-to-close behavior for Expeditions UI.
+
+Corrected issues where UI input blocked vanilla ESC behavior.
+
+Improved filter layout, spacing, grouping, and responsiveness.
+
+🧭 Where This Puts You (Big Picture)
+
+You are past the hardest architectural phase.
+
+At this point, the mod has:
+
+A stable data model
+
+A server-safe gameplay loop
+
+A scalable UI
+
+A vanilla-aligned NPC interaction flow
+
+What’s left is polish, content depth, and UX refinement, not foundational risk.
