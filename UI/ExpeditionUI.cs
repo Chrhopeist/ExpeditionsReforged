@@ -6,6 +6,7 @@ using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using ReLogic.Content;
 using Terraria;
 using Terraria.GameContent;
@@ -146,7 +147,7 @@ _closeButton.OnLeftClick += (_, _) =>
 ExpeditionsPlayer? player = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
 if (player != null)
 {
-player.ExpeditionUIOpen = false;
+CloseExpeditionUi(player);
 }
 };
 
@@ -503,6 +504,17 @@ _needsPopulate = true;
 
 public override void Update(GameTime gameTime)
 {
+// Close the expedition window on ESC to mirror vanilla UI behavior without pausing the game.
+if (Main.keyState.IsKeyDown(Keys.Escape) && !Main.oldKeyState.IsKeyDown(Keys.Escape))
+{
+if (TryGetActivePlayer(out ExpeditionsPlayer? player) && player.ExpeditionUIOpen)
+{
+CloseExpeditionUi(player);
+Main.blockInput = true;
+return;
+}
+}
+
 base.Update(gameTime);
 
 // UIState.Update can run even while the player is not ready; only rebuild when a world is
@@ -537,6 +549,11 @@ if (PopulateExpeditionList(player))
 {
 _needsPopulate = false;
 }
+}
+
+private static void CloseExpeditionUi(ExpeditionsPlayer player)
+{
+ModContent.GetInstance<ExpeditionsSystem>().CloseExpeditionUi(player);
 }
 
 private void RequestExpeditionListRefresh()

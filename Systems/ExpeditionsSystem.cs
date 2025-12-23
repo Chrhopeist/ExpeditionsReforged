@@ -56,12 +56,14 @@ namespace ExpeditionsReforged.Systems
 
         public override void UpdateUI(GameTime gameTime)
         {
+            var expeditionsPlayer = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
+            SyncExpeditionUiState(expeditionsPlayer);
+
             _expeditionInterface?.Update(gameTime);
             _trackerInterface?.Update(gameTime);
             _npcExpeditionInterface?.Update(gameTime);
 
             // Close the NPC expedition list when chat ends or the player changes targets.
-            var expeditionsPlayer = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
             if (expeditionsPlayer == null || _npcExpeditionUI == null)
             {
                 return;
@@ -162,6 +164,38 @@ namespace ExpeditionsReforged.Systems
         {
             expeditionsPlayer.NpcExpeditionUIOpen = false;
             _npcExpeditionUI?.ClearQuestGiver();
+        }
+
+        /// <summary>
+        /// Client-only close helper for the main Expeditions UI.
+        /// </summary>
+        public void CloseExpeditionUi(ExpeditionsPlayer expeditionsPlayer)
+        {
+            expeditionsPlayer.ExpeditionUIOpen = false;
+            _expeditionInterface?.SetState(null);
+        }
+
+        private void SyncExpeditionUiState(ExpeditionsPlayer expeditionsPlayer)
+        {
+            if (Main.dedServ || _expeditionInterface == null || _expeditionUI == null)
+            {
+                return;
+            }
+
+            if (expeditionsPlayer == null || !expeditionsPlayer.ExpeditionUIOpen)
+            {
+                if (_expeditionInterface.CurrentState != null)
+                {
+                    _expeditionInterface.SetState(null);
+                }
+
+                return;
+            }
+
+            if (_expeditionInterface.CurrentState == null)
+            {
+                _expeditionInterface.SetState(_expeditionUI);
+            }
         }
     }
 }
