@@ -11,6 +11,8 @@ namespace ExpeditionsReforged.Compat
     {
         private const string ExpeditionButtonId = "Expedition";
         private const string ExpeditionButtonText = "Expedition";
+        private const string TestButtonId = "DialogueTweakTest";
+        private const string TestButtonText = "Test";
 
         internal static void TryRegisterDialogueButtons()
         {
@@ -34,6 +36,16 @@ namespace ExpeditionsReforged.Compat
                     null,
                     (Func<NPC, bool>)IsNpcEligibleForExpeditions,
                     (Action<NPC>)HandleExpeditionButtonClick
+                );
+
+                // Proof-of-concept UI-only button for DialogueTweak integration.
+                dialogueTweak.Call(
+                    "RegisterButton",
+                    TestButtonId,
+                    TestButtonText,
+                    null,
+                    (Func<NPC, bool>)IsNpcEligibleForExpeditions,
+                    (Action<NPC>)HandleTestButtonClick
                 );
             }
             catch (Exception)
@@ -61,6 +73,11 @@ namespace ExpeditionsReforged.Compat
 
             // Open the Expeditions UI without interfering with the NPC chat window.
             ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi();
+        }
+
+        private static void HandleTestButtonClick(NPC npc)
+        {
+            // No-op: this button is a UI-only proof of concept.
         }
     }
 }
