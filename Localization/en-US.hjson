@@ -20,11 +20,6 @@
         "Desert": "Desert",
         "Dungeon": "Dungeon"
       },
-      "NPCs": {
-        "ExpeditionChatNPC": {
-          "DisplayName": "Expedition Coordinator"
-        }
-      },
       "Errors": {
         "ClientCannotStart": "Clients cannot start expeditions directly.",
         "InvalidExpeditionId": "That expedition could not be found.",
