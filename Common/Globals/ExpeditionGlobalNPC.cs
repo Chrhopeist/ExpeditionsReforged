@@ -6,6 +6,8 @@ using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Common.Globals
 {
+    // Chat buttons are handled via DialogueTweak compatibility; this GlobalNPC is only for
+    // expedition turn-ins on NPC interaction and kill reporting.
     public class ExpeditionGlobalNPC : GlobalNPC
     {
         // GetChat is used only as a turn-in trigger; the chat text is intentionally untouched.
@@ -90,39 +92,5 @@ namespace ExpeditionsReforged.Common.Globals
             }
         }
 
-        public override void SetChatButtons(NPC npc, ref string button, ref string button2)
-        {
-            if (Main.netMode == NetmodeID.Server)
-            {
-                return;
-            }
-
-            if (!npc.townNPC)
-            {
-                return;
-            }
-
-            // Placeholder until Expedition UI wiring is implemented.
-            button2 = "Test";
-        }
-
-        public override void OnChatButtonClicked(NPC npc, bool firstButton, ref bool shop)
-        {
-            if (Main.netMode == NetmodeID.Server)
-            {
-                return;
-            }
-
-            if (!npc.townNPC)
-            {
-                return;
-            }
-
-            // Placeholder response for the secondary button.
-            if (!firstButton)
-            {
-                Main.npcChatText = "Test button clicked.";
-            }
-        }
     }
 }
