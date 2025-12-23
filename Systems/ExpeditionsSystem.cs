@@ -104,6 +104,14 @@ namespace ExpeditionsReforged.Systems
         /// </summary>
         public void OpenExpeditionUi()
         {
+            OpenExpeditionUi(null);
+        }
+
+        /// <summary>
+        /// Client-only open helper that can lock the NPC filter to a specific quest giver.
+        /// </summary>
+        public void OpenExpeditionUi(int? questGiverNpcId)
+        {
             if (Main.dedServ)
             {
                 return;
@@ -114,6 +122,12 @@ namespace ExpeditionsReforged.Systems
             if (expeditionsPlayer == null)
             {
                 return;
+            }
+
+            if (_expeditionUI != null)
+            {
+                // Lock or clear the NPC filter before opening so the list is immediately scoped.
+                _expeditionUI.SetNpcFilterLock(questGiverNpcId, questGiverNpcId.HasValue);
             }
 
             expeditionsPlayer.ExpeditionUIOpen = true;

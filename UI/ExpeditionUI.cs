@@ -63,6 +63,7 @@ private CompletionFilter _completionFilter = CompletionFilter.All;
 private bool _filterRepeatableOnly;
 private bool _filterTrackedOnly;
 private int? _filterQuestGiverNpcId;
+private bool _npcFilterLocked;
 private SortMode _sortMode = SortMode.Name;
 private bool _sortAscending = true;
 private bool _needsPopulate = true;
@@ -1041,12 +1042,24 @@ RequestExpeditionListRefresh();
 
 private void CycleNpcHead()
 {
+if (_npcFilterLocked)
+{
+// When the UI is opened from an NPC, keep the quest giver filter locked to that NPC.
+return;
+}
+
 // Preserve existing forward cycling logic for left-click.
 CycleNpcFilter(1);
 }
 
 private void CycleNpcFilter(int direction)
 {
+if (_npcFilterLocked)
+{
+// Ignore attempts to change the NPC head filter while a quest giver lock is active.
+return;
+}
+
 if (_questGiverNpcIds.Count == 0)
 {
 _filterQuestGiverNpcId = null;
@@ -1067,6 +1080,15 @@ nextIndex += totalSlots;
 
 _filterQuestGiverNpcId = nextIndex >= _questGiverNpcIds.Count ? null : _questGiverNpcIds[nextIndex];
 
+UpdateNpcHeadTexture();
+RequestExpeditionListRefresh();
+}
+
+internal void SetNpcFilterLock(int? questGiverNpcId, bool lockFilter)
+{
+// Locking is a UI-only client state; it should never affect multiplayer gameplay data.
+_filterQuestGiverNpcId = questGiverNpcId;
+_npcFilterLocked = lockFilter;
 UpdateNpcHeadTexture();
 RequestExpeditionListRefresh();
 }
