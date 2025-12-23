@@ -5,6 +5,7 @@ using ExpeditionsReforged.Systems;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Microsoft.Xna.Framework.Input;
 
 namespace ExpeditionsReforged
 {
@@ -21,7 +22,7 @@ namespace ExpeditionsReforged
             if (!Main.dedServ)
             {
                 // Client-only keybind registration for toggling the Expeditions UI from Mod Controls.
-                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", "None");
+                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", Keys.OemPipe);
             }
         }
 

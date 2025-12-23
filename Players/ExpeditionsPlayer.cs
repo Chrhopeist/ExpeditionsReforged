@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Chat;
 using Terraria.ID;
+using Terraria.GameInput;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
@@ -98,6 +99,26 @@ namespace ExpeditionsReforged.Players
                 string conditionId = Main.dayTime ? "time:day" : "time:night";
                 ReportConditionProgress(conditionId, 1);
                 _lastDaytime = Main.dayTime;
+            }
+        }
+
+        public override void ProcessTriggers(TriggersSet triggers)
+        {
+            if (Main.dedServ || Player.whoAmI != Main.myPlayer || Main.gameMenu)
+            {
+                return;
+            }
+
+            // Avoid toggling the Expeditions UI while the player is typing or editing signs/chests.
+            if (Main.drawingPlayerChat || Main.editSign || Main.editChest)
+            {
+                return;
+            }
+
+            ModKeybind openExpeditionsKeybind = ExpeditionsReforged.OpenExpeditionsKeybind;
+            if (openExpeditionsKeybind != null && openExpeditionsKeybind.JustPressed)
+            {
+                ExpeditionUIOpen = !ExpeditionUIOpen;
             }
         }
 
