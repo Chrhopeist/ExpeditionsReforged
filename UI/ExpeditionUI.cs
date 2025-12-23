@@ -526,13 +526,14 @@ _needsPopulate = true;
 
 public override void Update(GameTime gameTime)
 {
-// Close the expedition window on ESC to mirror vanilla UI behavior without pausing the game.
+// Close the expedition window on ESC without consuming input unless the UI is open.
 if (Main.keyState.IsKeyDown(Keys.Escape) && !Main.oldKeyState.IsKeyDown(Keys.Escape))
 {
-if (TryGetActivePlayer(out ExpeditionsPlayer? activePlayer) && activePlayer.ExpeditionUIOpen)
+if (TryGetActivePlayer(out ExpeditionsPlayer? activePlayer)
+&& activePlayer.ExpeditionUIOpen
+&& !Main.drawingPlayerChat)
 {
 CloseExpeditionUi(activePlayer);
-Main.blockInput = true;
 return;
 }
 }
