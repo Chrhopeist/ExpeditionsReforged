@@ -37,15 +37,6 @@ namespace ExpeditionsReforged.Compat
             {
                 List<int> npcTypes = new() { NPCID.Guide };
 
-                // Proof-of-concept UI-only button for DialogueTweak integration.
-                dialogueTweak.Call(
-                    "AddButton",
-                    npcTypes,
-                    (Func<string>)(() => TestButtonText),
-                    (Func<string>)(() => null),
-                    (Action)HandleTestButtonHover
-                );
-
                 dialogueTweak.Call(
                     "AddButton",
                     npcTypes,
