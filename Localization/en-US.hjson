@@ -33,6 +33,9 @@
       },
       "Messages": {
         "ExpeditionCompleted": "Expedition completed!"
+      },
+      "UI": {
+        "ExpeditionButton": "Expedition"
       }
     }
   }

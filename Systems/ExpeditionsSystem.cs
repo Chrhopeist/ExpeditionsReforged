@@ -99,6 +99,27 @@ namespace ExpeditionsReforged.Systems
             _expeditionInterface?.SetState(null);
         }
 
+        /// <summary>
+        /// Client-only open helper for the main Expeditions UI.
+        /// </summary>
+        public void OpenExpeditionUi()
+        {
+            if (Main.dedServ)
+            {
+                return;
+            }
+
+            ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
+
+            if (expeditionsPlayer == null)
+            {
+                return;
+            }
+
+            expeditionsPlayer.ExpeditionUIOpen = true;
+            _expeditionInterface?.SetState(_expeditionUI);
+        }
+
         private void SyncExpeditionUiState(ExpeditionsPlayer expeditionsPlayer)
         {
             if (Main.dedServ || _expeditionInterface == null || _expeditionUI == null)

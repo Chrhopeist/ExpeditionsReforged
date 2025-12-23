@@ -1,5 +1,4 @@
 using System.IO;
-using ExpeditionsReforged.Compat;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
@@ -115,11 +114,6 @@ namespace ExpeditionsReforged
 
                     break;
             }
-        }
-
-        public override void PostSetupContent()
-        {
-            DialogueTweakCompat.RegisterDialogueButton(this);
         }
 
         internal static void RequestStart(string expeditionId)
