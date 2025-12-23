@@ -172,25 +172,11 @@ public class TrackerUI : UIState
             Height = StyleDimension.FromPixels(36f * _scale)
         };
 
-        // The tracker UI should not accept/start expeditions directly.
+        // The tracker UI is read-only; use the quest-giver NPC for accepting or turning in expeditions.
         var startButton = CreateActionButton("Start", false, null);
         AddTooltip(startButton, "Accept expeditions by speaking with the quest giver.");
         startButton.Left.Set(0f, 0f);
         buttonRow.Append(startButton);
-
-        var completeButton = CreateActionButton("Turn In", progress is { IsCompleted: true } && !progress.RewardsClaimed, () =>
-        {
-            var expeditionsPlayer = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
-            if (expeditionsPlayer == null)
-                return;
-
-            if (expeditionsPlayer.TryCompleteExpedition(definition.Id))
-            {
-                expeditionsPlayer.TryClaimRewards(definition.Id);
-            }
-        });
-        completeButton.Left.Set(150f * _scale, 0f);
-        buttonRow.Append(completeButton);
 
         _contentList.Add(buttonRow);
     }

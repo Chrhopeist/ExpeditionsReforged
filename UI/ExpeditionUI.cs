@@ -868,7 +868,6 @@ _detailsList.Add(new UIText($"• {FormatReward(reward)}", 0.8f * _uiScale));
 }
 
 _detailsButtonRow.RemoveAllChildren();
-bool canClaim = progress != null && progress.IsCompleted && !progress.RewardsClaimed;
 bool isTracked = activePlayer != null &&
     string.Equals(activePlayer.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
 
@@ -878,21 +877,14 @@ AddTooltip(startButton, "Accept expeditions by speaking with the quest giver.");
 startButton.Left.Set(0f, 0f);
 _detailsButtonRow.Append(startButton);
 
-var claimButton = CreateActionButton("Claim", canClaim, () =>
-{
-    activePlayer?.TryClaimRewards(definition.Id);
-    RequestExpeditionListRefresh();
-});
-claimButton.Left.Set(Scale(132f), 0f);
-_detailsButtonRow.Append(claimButton);
-
 bool canTrack = activePlayer != null && (isTracked || progress != null);
 var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
 {
     activePlayer?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
     RequestExpeditionListRefresh();
 });
-trackButton.Left.Set(Scale(264f), 0f);
+// Rewards are delivered via the quest-giver NPC; keep the UI read-only for completion status.
+trackButton.Left.Set(Scale(132f), 0f);
 _detailsButtonRow.Append(trackButton);
 }
 
