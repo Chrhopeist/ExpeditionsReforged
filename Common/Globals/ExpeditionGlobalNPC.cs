@@ -1,6 +1,7 @@
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Common.Globals
@@ -86,6 +87,41 @@ namespace ExpeditionsReforged.Common.Globals
             if (player?.active == true && !player.dead)
             {
                 player.GetModPlayer<ExpeditionsPlayer>().ReportKill(npc);
+            }
+        }
+
+        public override void SetChatButtons(NPC npc, ref string button, ref string button2)
+        {
+            if (Main.netMode == NetmodeID.Server)
+            {
+                return;
+            }
+
+            if (!npc.townNPC)
+            {
+                return;
+            }
+
+            // Placeholder until Expedition UI wiring is implemented.
+            button2 = "Test";
+        }
+
+        public override void OnChatButtonClicked(NPC npc, bool firstButton, ref bool shop)
+        {
+            if (Main.netMode == NetmodeID.Server)
+            {
+                return;
+            }
+
+            if (!npc.townNPC)
+            {
+                return;
+            }
+
+            // Placeholder response for the secondary button.
+            if (!firstButton)
+            {
+                Main.npcChatText = "Test button clicked.";
             }
         }
     }
