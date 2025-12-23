@@ -104,7 +104,9 @@ namespace ExpeditionsReforged.Systems
         /// </summary>
         public void OpenExpeditionUi()
         {
-            OpenExpeditionUi(null);
+            // Use the NPC overload to keep UI-opening logic consistent when no quest giver is provided.
+            NPC npc = null;
+            OpenExpeditionUi(npc);
         }
 
         /// <summary>
