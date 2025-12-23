@@ -14,6 +14,79 @@ namespace ExpeditionsReforged.Systems
     public static class ExpeditionService
     {
         /// <summary>
+        /// Determines if a player can accept the provided expedition definition.
+        /// This is the single authoritative validation rule set for expedition acceptance.
+        /// </summary>
+        /// <param name="player">The player attempting to accept an expedition.</param>
+        /// <param name="definition">The expedition definition to validate.</param>
+        /// <param name="failReasonKey">Localization key describing why acceptance failed, if applicable.</param>
+        /// <returns>True if the expedition can be accepted; otherwise false.</returns>
+        public static bool CanAcceptExpedition(Player player, ExpeditionDefinition definition, out string? failReasonKey)
+        {
+            failReasonKey = null;
+
+            if (player == null || !player.active)
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.InvalidPlayer";
+                return false;
+            }
+
+            if (definition == null)
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.ExpeditionNotFound";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(definition.Id))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.InvalidExpeditionId";
+                return false;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            if (!registry.TryGetExpedition(definition.Id, out ExpeditionDefinition registryDefinition))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.ExpeditionNotFound";
+                return false;
+            }
+
+            ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
+            if (expeditionsPlayer == null)
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.PlayerDataMissing";
+                return false;
+            }
+
+            // Do not accept an expedition that is already active.
+            if (expeditionsPlayer.IsExpeditionActive(registryDefinition.Id))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.AlreadyActive";
+                return false;
+            }
+
+            // Non-repeatable expeditions can only be accepted once.
+            if (!registryDefinition.IsRepeatable && expeditionsPlayer.IsExpeditionCompleted(registryDefinition.Id))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.AlreadyCompleted";
+                return false;
+            }
+
+            if (!MeetsProgressionRequirement(player, registryDefinition))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.ProgressionTooLow";
+                return false;
+            }
+
+            if (!MeetsPrerequisites(player, registryDefinition))
+            {
+                failReasonKey = "Mods.ExpeditionsReforged.Errors.PrerequisitesNotMet";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Attempts to start an expedition for the given player. This is the single authority point
         /// for starting expeditions; UI and network handlers should route through this method.
         /// </summary>
@@ -39,56 +112,16 @@ namespace ExpeditionsReforged.Systems
                 return false;
             }
 
-            // Validate player
-            if (player == null || !player.active)
-            {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.InvalidPlayer";
-                return false;
-            }
-
-            ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
-            if (expeditionsPlayer == null)
-            {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.PlayerDataMissing";
-                return false;
-            }
-
-            // Validate expedition definition exists
+            // Resolve the expedition definition before validating acceptance.
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
-            if (!registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
+            registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition);
+            if (!CanAcceptExpedition(player, definition, out failReasonKey))
             {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.ExpeditionNotFound";
-                return false;
-            }
-
-            // Check if expedition is already active
-            if (expeditionsPlayer.IsExpeditionActive(expeditionId))
-            {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.AlreadyActive";
-                return false;
-            }
-
-            // Check repeatability: non-repeatable expeditions can only be started once
-            if (!definition.IsRepeatable && expeditionsPlayer.IsExpeditionCompleted(expeditionId))
-            {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.AlreadyCompleted";
-                return false;
-            }
-
-            if (!MeetsProgressionRequirement(player, definition))
-            {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.ProgressionTooLow";
-                return false;
-            }
-
-            if (!MeetsPrerequisites(player, definition))
-            {
-                failReasonKey = "Mods.ExpeditionsReforged.Errors.PrerequisitesNotMet";
                 return false;
             }
 
             // Server-authoritative state mutation: start the expedition
-            expeditionsPlayer.StartExpedition(expeditionId, Main.GameUpdateCount);
+            player.GetModPlayer<ExpeditionsPlayer>().StartExpedition(definition.Id, Main.GameUpdateCount);
 
             return true;
         }
@@ -185,8 +218,7 @@ namespace ExpeditionsReforged.Systems
                 return false;
             }
 
-            ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
-            if (expeditionsPlayer == null)
+            if (player.GetModPlayer<ExpeditionsPlayer>() == null)
             {
                 return false;
             }
@@ -200,23 +232,11 @@ namespace ExpeditionsReforged.Systems
                     continue;
                 }
 
-                // Match the NPC expedition list filters so the button only appears when something is available.
-                if (expeditionsPlayer.IsExpeditionActive(definition.Id))
+                // Match the expedition acceptance rules so the button only appears when something is available.
+                if (CanAcceptExpedition(player, definition, out _))
                 {
-                    continue;
+                    return true;
                 }
-
-                if (!definition.IsRepeatable && expeditionsPlayer.IsExpeditionCompleted(definition.Id))
-                {
-                    continue;
-                }
-
-                if (!MeetsPrerequisites(player, definition))
-                {
-                    continue;
-                }
-
-                return true;
             }
 
             return false;
