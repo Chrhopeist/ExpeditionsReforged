@@ -37,7 +37,7 @@ namespace ExpeditionsReforged.Compat
 
             for (int npcId = 0; npcId < NPCID.Count; npcId++)
             {
-                if (!NPCID.Sets.TownNPC[npcId])
+                if (!NPCID.Sets.ActsLikeTownNPC[npcId])
                 {
                     continue;
                 }
