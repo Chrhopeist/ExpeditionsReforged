@@ -16,12 +16,20 @@ namespace ExpeditionsReforged.Compat
 
         internal static void TryRegisterDialogueButtons()
         {
+            ExpeditionsReforged mod = ModContent.GetInstance<ExpeditionsReforged>();
+            // Temporary logging to confirm DialogueTweak integration attempts during debugging.
+            mod.Logger.Info("DialogueTweakCompat.TryRegisterDialogueButtons: starting registration.");
+
             if (Main.dedServ)
             {
+                mod.Logger.Info("DialogueTweakCompat.TryRegisterDialogueButtons: skipped on dedicated server.");
                 return;
             }
 
-            if (!ModLoader.TryGetMod("DialogueTweak", out Mod dialogueTweak))
+            bool hasDialogueTweak = ModLoader.TryGetMod("DialogueTweak", out Mod dialogueTweak);
+            mod.Logger.Info($"DialogueTweakCompat.TryRegisterDialogueButtons: DialogueTweak loaded = {hasDialogueTweak}.");
+
+            if (!hasDialogueTweak)
             {
                 return;
             }
