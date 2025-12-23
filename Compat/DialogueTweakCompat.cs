@@ -1,15 +1,19 @@
 using System;
-using ExpeditionsReforged.Systems;
 using ExpeditionsReforged.Players;
+using ExpeditionsReforged.Systems;
 using Terraria;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Compat
 {
-    internal static class DialogueTweakCompat
+    internal sealed class DialogueTweakCompat : ModSystem
     {
-        internal static void RegisterDialogueButton(Mod mod)
+        private const string ExpeditionButtonId = "ExpeditionsReforged:Expedition";
+        private const string ExpeditionButtonLocalizationKey = "Mods.ExpeditionsReforged.UI.ExpeditionButton";
+
+        public override void Load()
         {
             if (Main.dedServ)
             {
@@ -21,103 +25,58 @@ namespace ExpeditionsReforged.Compat
                 return;
             }
 
-            bool warnedOnce = false;
-            bool supportsAvailabilityPredicate = true;
-
-            void LogWarningOnce(Exception exception)
+            // DialogueTweak integration is optional; failures should not interrupt mod loading.
+            try
             {
-                if (warnedOnce)
-                {
-                    return;
-                }
-
-                warnedOnce = true;
-                mod.Logger.Warn("DialogueTweak compatibility call failed; skipping optional dialogue button.", exception);
+                dialogueTweak.Call(
+                    "RegisterButton",
+                    ExpeditionButtonId,
+                    Language.GetTextValue(ExpeditionButtonLocalizationKey),
+                    null,
+                    (Func<NPC, bool>)IsNpcEligibleForExpeditions,
+                    (Action<NPC>)HandleExpeditionButtonClick
+                );
             }
-
-            for (int npcId = 0; npcId < NPCID.Count; npcId++)
+            catch (Exception)
             {
+                // Fail silently if DialogueTweak changes its API or Mod.Call signature.
+            }
+        }
                 if (!NPCID.Sets.ActsLikeTownNPC[npcId])
                 {
                     continue;
                 }
 
-                // DialogueTweak Mod.Call string: "AddButton".
-                // DialogueTweak only exposes a hover Action for custom buttons, so we detect clicks inside it.
-                // "Head" uses DialogueTweak's NPC head placeholder icon identifier.
-                Action hoverAction = () =>
-                {
-                    Main.instance.MouseText("View available expeditions");
-
-                    if (!Main.mouseLeft || !Main.mouseLeftRelease)
-                    {
-                        return;
-                    }
-
-                    ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
-                    expeditionsPlayer.ExpeditionUIOpen = true;
-                    // Close the NPC chat panel so the Expeditions UI does not overlap DialogueTweak's panel.
-                    Main.CloseNPCChatOrSign();
-                };
-                Func<bool> availabilityPredicate = () => ExpeditionService.IsExpeditionGiver(npcId, Main.LocalPlayer);
-
-                // DialogueTweak may change its Mod.Call signature, so we attempt the predicate overload first
-                // and fall back to the base overload if it fails.
-                try
-                {
-                    if (supportsAvailabilityPredicate)
-                    {
-                        dialogueTweak.Call(
-                            "AddButton",
-                            npcId,
-                            "Expedition",
-                            "Head",
-                            hoverAction,
-                            availabilityPredicate
-                        );
-                    }
-                    else
-                    {
-                        dialogueTweak.Call(
-                            "AddButton",
-                            npcId,
-                            "Expedition",
-                            "Head",
-                            hoverAction
-                        );
-                    }
-                }
-                catch (Exception ex)
-                {
-                    bool loggedFailure = false;
-
-                    if (supportsAvailabilityPredicate)
-                    {
-                        supportsAvailabilityPredicate = false;
-
-                        try
-                        {
-                            dialogueTweak.Call(
-                                "AddButton",
-                                npcId,
-                                "Expedition",
-                                "Head",
-                                hoverAction
-                            );
-                        }
-                        catch (Exception retryException)
-                        {
-                            LogWarningOnce(retryException);
-                            loggedFailure = true;
-                        }
-                    }
-
-                    if (!loggedFailure)
-                    {
-                        LogWarningOnce(ex);
-                    }
-                }
+        private static bool IsNpcEligibleForExpeditions(NPC npc)
+        {
+            if (npc == null)
+            {
+                return false;
             }
+
+            if (!NPCID.Sets.ActsLikeTownNPC[npc.type])
+            {
+                return false;
+            }
+
+            return ExpeditionService.IsExpeditionGiver(npc.type, Main.LocalPlayer);
+        }
+
+        private static void HandleExpeditionButtonClick(NPC npc)
+        {
+            if (Main.dedServ)
+            {
+                return;
+            }
+
+            // Close the NPC chat panel before opening the Expeditions UI.
+            Main.npcChatRelease = true;
+            Main.playerInventory = false;
+
+            ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
+            expeditionsPlayer.ExpeditionUIOpen = true;
+
+            ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi();
         }
     }
 }
