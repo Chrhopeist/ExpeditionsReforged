@@ -10,10 +10,7 @@ namespace ExpeditionsReforged.Compat
 {
     internal static class DialogueTweakCompat
     {
-        private const string ExpeditionButtonId = "Expedition";
         private const string ExpeditionButtonText = "Expedition";
-        private const string TestButtonId = "DialogueTweakTest";
-        private const string TestButtonText = "Test";
 
         internal static void TryRegisterDialogueButtons()
         {
