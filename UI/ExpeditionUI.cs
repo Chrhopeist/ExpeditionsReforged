@@ -480,6 +480,12 @@ if (element == _completionButton || element == _repeatableButton || element == _
 {
 x += groupButtonSpacing;
 }
+
+// Add an extra group gap between Repeatable and Tracked to keep them visually distinct.
+if (element == _repeatableButton)
+{
+x += groupSpacing;
+}
 }
 }
 
