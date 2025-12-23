@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
-using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Common.Globals
@@ -74,33 +72,6 @@ namespace ExpeditionsReforged.Common.Globals
             if (turnedIn && Main.netMode == NetmodeID.Server)
             {
                 ExpeditionsReforged.SendProgressSync(-1, player.whoAmI, expeditionsPlayer);
-            }
-        }
-
-        public override void ModifyChatButtons(NPC npc, List<string> buttons)
-        {
-            if (npc.type != NPCID.Guide)
-            {
-                return;
-            }
-
-            // Temporary test hook to remap the Guide's second chat button without changing behavior.
-            if (buttons.Count > 1)
-            {
-                buttons[1] = "Test";
-            }
-        }
-
-        public override void OnChatButtonClicked(NPC npc, int button, ref bool shop)
-        {
-            if (npc.type != NPCID.Guide)
-            {
-                return;
-            }
-
-            if (button == 1)
-            {
-                // Intentionally no behavior yet; this confirms the click is detected.
             }
         }
 
