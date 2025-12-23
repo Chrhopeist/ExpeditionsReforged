@@ -13,11 +13,8 @@ namespace ExpeditionsReforged.Systems
     {
         private UserInterface _expeditionInterface;
         private UserInterface _trackerInterface;
-        private UserInterface _npcExpeditionInterface;
-
         private ExpeditionUI _expeditionUI;
         private TrackerUI _trackerUI;
-        private NpcExpeditionUI _npcExpeditionUI;
 
         public override void Load()
         {
@@ -28,8 +25,6 @@ namespace ExpeditionsReforged.Systems
             // is active. ExpeditionUI defers any player-dependent population until a player exists.
             _expeditionInterface = new UserInterface();
             _trackerInterface = new UserInterface();
-            _npcExpeditionInterface = new UserInterface();
-
             _expeditionUI = new ExpeditionUI();
             _expeditionUI.Activate();
             _expeditionInterface.SetState(_expeditionUI);
@@ -37,21 +32,14 @@ namespace ExpeditionsReforged.Systems
             _trackerUI = new TrackerUI();
             _trackerUI.Activate();
             _trackerInterface.SetState(_trackerUI);
-
-            _npcExpeditionUI = new NpcExpeditionUI();
-            _npcExpeditionUI.Activate();
-            _npcExpeditionInterface.SetState(_npcExpeditionUI);
         }
 
         public override void Unload()
         {
             _expeditionInterface = null;
             _trackerInterface = null;
-            _npcExpeditionInterface = null;
-
             _expeditionUI = null;
             _trackerUI = null;
-            _npcExpeditionUI = null;
         }
 
         public override void UpdateUI(GameTime gameTime)
@@ -61,31 +49,6 @@ namespace ExpeditionsReforged.Systems
 
             _expeditionInterface?.Update(gameTime);
             _trackerInterface?.Update(gameTime);
-            _npcExpeditionInterface?.Update(gameTime);
-
-            // Close the NPC expedition list when chat ends or the player changes targets.
-            if (expeditionsPlayer == null || _npcExpeditionUI == null)
-            {
-                return;
-            }
-
-            if (!expeditionsPlayer.NpcExpeditionUIOpen)
-            {
-                return;
-            }
-
-            int talkNpcIndex = Main.LocalPlayer.talkNPC;
-            if (talkNpcIndex < 0 || talkNpcIndex >= Main.maxNPCs)
-            {
-                CloseNpcExpeditionUI(expeditionsPlayer);
-                return;
-            }
-
-            NPC npc = Main.npc[talkNpcIndex];
-            if (!npc.active || npc.type != _npcExpeditionUI.QuestGiverNpcType)
-            {
-                CloseNpcExpeditionUI(expeditionsPlayer);
-            }
         }
 
         public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
@@ -124,46 +87,7 @@ namespace ExpeditionsReforged.Systems
                     },
                     InterfaceScaleType.UI));
 
-                layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
-                    "ExpeditionsReforged: NPC Expedition UI",
-                    delegate
-                    {
-                        bool chatOpen = expeditionsPlayer != null && Main.LocalPlayer.talkNPC != -1;
-                        if (chatOpen && expeditionsPlayer.NpcExpeditionUIOpen && _npcExpeditionInterface?.CurrentState != null)
-                        {
-                            _npcExpeditionInterface.Draw(Main.spriteBatch, new GameTime());
-                        }
-
-                        return true;
-                    },
-                    InterfaceScaleType.UI));
             }
-        }
-
-        /// <summary>
-        /// Opens the NPC expedition list for the provided quest giver.
-        /// </summary>
-        public void OpenNpcExpeditionUI(int questGiverNpcType)
-        {
-            if (Main.dedServ)
-            {
-                return;
-            }
-
-            var expeditionsPlayer = Main.LocalPlayer?.GetModPlayer<ExpeditionsPlayer>();
-            if (expeditionsPlayer == null || _npcExpeditionUI == null)
-            {
-                return;
-            }
-
-            expeditionsPlayer.NpcExpeditionUIOpen = true;
-            _npcExpeditionUI.ShowForNpc(questGiverNpcType);
-        }
-
-        private void CloseNpcExpeditionUI(ExpeditionsPlayer expeditionsPlayer)
-        {
-            expeditionsPlayer.NpcExpeditionUIOpen = false;
-            _npcExpeditionUI?.ClearQuestGiver();
         }
 
         /// <summary>
