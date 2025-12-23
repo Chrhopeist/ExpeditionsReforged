@@ -15,13 +15,36 @@ namespace ExpeditionsReforged.Common.Globals
 
         public override void PostDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
         {
+            if (npc.type == NPCID.Guide)
+            {
+                ModContent.GetInstance<Mod>().Logger.Info("[QuestMarker] PostDraw hit for Guide");
+            }
+
             if (npc is null || !npc.active)
             {
                 return;
             }
 
             Player player = Main.LocalPlayer;
-            if (player?.active != true || !ExpeditionService.IsExpeditionGiver(npc.type, player))
+            if (npc.type == NPCID.Guide)
+            {
+                ModContent.GetInstance<Mod>().Logger.Info(
+                    $"[QuestMarker] Guide active={npc.active}, playerActive={Main.LocalPlayer?.active}"
+                );
+            }
+
+            if (player?.active != true)
+            {
+                return;
+            }
+
+            bool isGiver = ExpeditionService.IsExpeditionGiver(npc.type, player);
+            if (npc.type == NPCID.Guide)
+            {
+                ModContent.GetInstance<Mod>().Logger.Info($"[QuestMarker] IsExpeditionGiver={isGiver}");
+            }
+
+            if (!isGiver)
             {
                 return;
             }
@@ -45,6 +68,10 @@ namespace ExpeditionsReforged.Common.Globals
             ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
 
+            ModContent.GetInstance<Mod>().Logger.Info(
+                $"[QuestMarker] Checking expeditions for NPC type {npc.type}"
+            );
+
             foreach (ExpeditionDefinition definition in registry.Definitions)
             {
                 if (definition.QuestGiverNpcId != npc.type)
@@ -52,8 +79,18 @@ namespace ExpeditionsReforged.Common.Globals
                     continue;
                 }
 
+                if (definition.QuestGiverNpcId == npc.type)
+                {
+                    ModContent.GetInstance<Mod>().Logger.Info(
+                        $"[QuestMarker] Found expedition {definition.Id} for NPC {npc.type}"
+                    );
+                }
+
                 if (ExpeditionService.CanAcceptExpedition(player, definition, out _))
                 {
+                    ModContent.GetInstance<Mod>().Logger.Info(
+                        $"[QuestMarker] CanAcceptExpedition TRUE for {definition.Id}"
+                    );
                     return true;
                 }
             }
