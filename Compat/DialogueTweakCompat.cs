@@ -3,15 +3,14 @@ using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
 using Terraria.ID;
-using Terraria.Localization;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Compat
 {
     internal static class DialogueTweakCompat
     {
-        private const string ExpeditionButtonId = "ExpeditionsReforged:Expedition";
-        private const string ExpeditionButtonLocalizationKey = "Mods.ExpeditionsReforged.UI.ExpeditionButton";
+        private const string ExpeditionButtonId = "Expedition";
+        private const string ExpeditionButtonText = "Expedition";
 
         internal static void TryRegisterDialogueButtons()
         {
@@ -25,13 +24,13 @@ namespace ExpeditionsReforged.Compat
                 return;
             }
 
-            // DialogueTweak integration is optional; failures should not interrupt mod loading.
+            // DialogueTweak integration is optional; fail silently if its API changes.
             try
             {
                 dialogueTweak.Call(
                     "RegisterButton",
                     ExpeditionButtonId,
-                    Language.GetTextValue(ExpeditionButtonLocalizationKey),
+                    ExpeditionButtonText,
                     null,
                     (Func<NPC, bool>)IsNpcEligibleForExpeditions,
                     (Action<NPC>)HandleExpeditionButtonClick
@@ -39,23 +38,14 @@ namespace ExpeditionsReforged.Compat
             }
             catch (Exception)
             {
-                // Fail silently if DialogueTweak changes its API or Mod.Call signature.
+                // DialogueTweak is optional; Mod.Call errors should not block mod loading.
             }
         }
 
         private static bool IsNpcEligibleForExpeditions(NPC npc)
         {
-            if (npc == null)
-            {
-                return false;
-            }
-
-            if (!NPCID.Sets.ActsLikeTownNPC[npc.type])
-            {
-                return false;
-            }
-
-            return ExpeditionService.IsExpeditionGiver(npc.type, Main.LocalPlayer);
+            // DialogueTweak should only show the Expeditions button for the Guide.
+            return npc != null && npc.type == NPCID.Guide;
         }
 
         private static void HandleExpeditionButtonClick(NPC npc)
@@ -65,13 +55,11 @@ namespace ExpeditionsReforged.Compat
                 return;
             }
 
-            // Close the NPC chat panel before opening the Expeditions UI.
-            Main.npcChatRelease = true;
-            Main.playerInventory = false;
-
             ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
+            // Track the requested UI state even if the UI layer is recreated later.
             expeditionsPlayer.ExpeditionUIOpen = true;
 
+            // Open the Expeditions UI without interfering with the NPC chat window.
             ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi();
         }
     }
