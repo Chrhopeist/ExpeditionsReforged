@@ -87,7 +87,7 @@ private const float FilterButtonHeightPixels = 16f;
 // Keep consistent breathing room between top-row controls without relying on hardcoded offsets.
 private const float FilterButtonSpacingPixels = 32f;
 // Add extra horizontal gaps between availability-related filters to prevent overlap as labels change.
-private const float FilterGroupSpacingPixels = 28f;
+private const float FilterGroupSpacingPixels = 48f;
 private const float FilterGroupButtonSpacingPixels = 40f;
 
 public override void OnInitialize()
