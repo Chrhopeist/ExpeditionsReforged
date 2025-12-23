@@ -874,7 +874,7 @@ var startButton = CreateActionButton("Start", canStart, () =>
     activePlayer.TryStartExpedition(definition.Id);
     RequestExpeditionListRefresh();
 });
-AddTooltip(startButton, canStart ? "Start the selected expedition." : "This expedition is not currently available.");
+AddTooltip(startButton, canStart ? "Start the selected expedition." : "Accept expeditions from town NPCs. Talk to NPCs to accept or turn in expeditions.");
 startButton.Left.Set(0f, 0f);
 _detailsButtonRow.Append(startButton);
 
