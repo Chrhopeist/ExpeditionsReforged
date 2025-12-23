@@ -42,6 +42,10 @@ namespace ExpeditionsReforged.Compat
                 // Fail silently if DialogueTweak changes its API or Mod.Call signature.
             }
         }
+                if (!NPCID.Sets.ActsLikeTownNPC[npcId])
+                {
+                    continue;
+                }
 
         private static bool IsNpcEligibleForExpeditions(NPC npc)
         {
