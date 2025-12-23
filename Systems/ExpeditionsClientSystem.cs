@@ -36,7 +36,17 @@ namespace ExpeditionsReforged.Systems
             if (ExpeditionsReforged.OpenExpeditionsKeybind.JustPressed)
             {
                 ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
-                expeditionsPlayer.ExpeditionUIOpen = !expeditionsPlayer.ExpeditionUIOpen;
+                ExpeditionsSystem expeditionsSystem = ModContent.GetInstance<ExpeditionsSystem>();
+
+                if (expeditionsPlayer.ExpeditionUIOpen)
+                {
+                    expeditionsSystem.CloseExpeditionUi(expeditionsPlayer);
+                }
+                else
+                {
+                    // Keybind opens the UI without locking to a quest giver.
+                    expeditionsSystem.OpenExpeditionUi();
+                }
             }
         }
     }
