@@ -1,4 +1,5 @@
 using System.IO;
+using ExpeditionsReforged.Compat;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
@@ -28,6 +29,12 @@ namespace ExpeditionsReforged
         {
             OpenExpeditionsKeybind = null;
             Instance = null;
+        }
+
+        public override void PostSetupContent()
+        {
+            // Register optional DialogueTweak integration after all mod content has loaded.
+            DialogueTweakCompat.TryRegisterDialogueButtons();
         }
 
         public override void HandlePacket(BinaryReader reader, int whoAmI)
