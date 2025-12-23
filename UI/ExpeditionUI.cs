@@ -523,9 +523,9 @@ public override void Update(GameTime gameTime)
 // Close the expedition window on ESC to mirror vanilla UI behavior without pausing the game.
 if (Main.keyState.IsKeyDown(Keys.Escape) && !Main.oldKeyState.IsKeyDown(Keys.Escape))
 {
-if (TryGetActivePlayer(out ExpeditionsPlayer? player) && player.ExpeditionUIOpen)
+if (TryGetActivePlayer(out ExpeditionsPlayer? activePlayer) && activePlayer.ExpeditionUIOpen)
 {
-CloseExpeditionUi(player);
+CloseExpeditionUi(activePlayer);
 Main.blockInput = true;
 return;
 }
