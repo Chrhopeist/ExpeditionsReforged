@@ -69,8 +69,7 @@ namespace ExpeditionsReforged.Compat
             // Open the Expeditions UI without interfering with the NPC chat window.
             // Lock the NPC filter to the quest giver currently being talked to.
             NPC? talkNpc = Main.LocalPlayer?.TalkNPC;
-            int? questGiverNpcId = talkNpc?.type;
-            ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi(questGiverNpcId);
+            ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi(talkNpc);
         }
 
         private static void HandleTestButtonHover()
