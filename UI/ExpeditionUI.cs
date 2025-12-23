@@ -607,34 +607,20 @@ _expeditionList.Clear();
 _entries.Clear();
 
 var registry = ModContent.GetInstance<ExpeditionRegistry>();
-// Build the source list from the player's accepted expeditions, skipping orphaned progress entries.
-List<ExpeditionDefinition> acceptedDefinitions = new();
-foreach (ExpeditionProgress progress in player.ExpeditionProgressEntries)
-{
-if (progress == null || string.IsNullOrWhiteSpace(progress.ExpeditionId))
-{
-continue;
-}
+// Build the source list from every registered definition so filters can include not-yet-accepted expeditions.
+var definitions = registry.Definitions.AsEnumerable();
 
-if (registry.TryGetExpedition(progress.ExpeditionId, out ExpeditionDefinition definition))
-{
-acceptedDefinitions.Add(definition);
-}
-}
-
-bool hasAcceptedExpeditions = acceptedDefinitions.Count > 0;
-_detailsPlaceholderText = hasAcceptedExpeditions
+bool hasDefinitions = registry.Definitions.Count > 0;
+_detailsPlaceholderText = hasDefinitions
 ? "Select an expedition to view its details."
-// Use a clearer empty state when the player has not accepted any expeditions.
-: "No accepted expeditions.";
+// Use a clearer empty state when no expeditions are registered.
+: "No expeditions available.";
 
 if (_detailsPlaceholder?.Parent != null)
 {
 // Keep the placeholder message in sync when the accepted list changes.
 _detailsPlaceholder.SetText(_detailsPlaceholderText);
 }
-
-var definitions = acceptedDefinitions.AsEnumerable();
 
 if (!string.Equals(_selectedCategory, "All", StringComparison.OrdinalIgnoreCase))
 {
@@ -683,9 +669,9 @@ _expeditionList.Add(entry);
 
 _rarityMarkers.SetEntries(_entries.Select(entry => (entry.View, entry.Height.Pixels + _expeditionList.ListPadding)).ToList());
 
-if (!hasAcceptedExpeditions)
+if (!hasDefinitions)
 {
-// Clear any stale selection details when there are no accepted expeditions.
+// Clear any stale selection details when there are no expeditions to display.
 _selectedExpeditionId = string.Empty;
 ShowPlaceholder();
 }
@@ -871,9 +857,24 @@ _detailsButtonRow.RemoveAllChildren();
 bool isTracked = activePlayer != null &&
     string.Equals(activePlayer.TrackedExpeditionId, definition.Id, StringComparison.OrdinalIgnoreCase);
 
-// Expedition acceptance should happen through NPC interactions, not the log UI.
-var startButton = CreateActionButton("Start", false, null);
-AddTooltip(startButton, "Accept expeditions by speaking with the quest giver.");
+bool isActive = progress?.IsActive == true && progress?.IsCompleted == false;
+bool canStart = activePlayer != null
+    // An expedition is available when it is not active and is either not completed or repeatable.
+    && !isActive
+    && (progress == null || definition.IsRepeatable || !progress.IsCompleted);
+
+var startButton = CreateActionButton("Start", canStart, () =>
+{
+    if (activePlayer == null)
+    {
+        return;
+    }
+
+    // Use the existing server-authoritative request flow to start the expedition.
+    activePlayer.TryStartExpedition(definition.Id);
+    RequestExpeditionListRefresh();
+});
+AddTooltip(startButton, canStart ? "Start the selected expedition." : "This expedition is not currently available.");
 startButton.Left.Set(0f, 0f);
 _detailsButtonRow.Append(startButton);
 
@@ -1122,7 +1123,9 @@ private ExpeditionView BuildView(ExpeditionDefinition definition, ExpeditionsPla
 {
 ExpeditionProgress? progress = player?.ExpeditionProgressEntries.FirstOrDefault(entry => entry.ExpeditionId == definition.Id);
 
-bool isAvailable = progress == null || (definition.IsRepeatable || !progress.IsCompleted);
+bool isAvailable = progress == null
+    // An expedition is available when it is not active and is either not completed or repeatable.
+    || (!progress.IsActive && (definition.IsRepeatable || !progress.IsCompleted));
 bool isCompleted = progress?.IsCompleted == true;
 bool isActive = progress?.IsActive == true && !isCompleted;
 string status = progress switch
@@ -1348,12 +1351,13 @@ HAlign = 0f,
 Top = new StyleDimension(owner.Scale(22f), 0f)
 };
 
-string statusLabel = view.IsAvailable ? $"Status: {view.Status}" : "Status: Unavailable";
+bool showUnavailable = !view.IsAvailable && !view.IsActive && !view.IsCompleted;
+string statusLabel = showUnavailable ? "Status: Unavailable" : $"Status: {view.Status}";
 _statusText = new UIText(statusLabel, 0.75f * owner._uiScale)
 {
 HAlign = 0f,
 Top = new StyleDimension(owner.Scale(40f), 0f),
-TextColor = view.IsAvailable ? Color.White : Color.LightGray
+TextColor = showUnavailable ? Color.LightGray : Color.White
 };
 
 _progressBar = new SegmentedProgressBar
