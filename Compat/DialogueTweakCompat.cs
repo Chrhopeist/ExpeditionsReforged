@@ -8,12 +8,12 @@ using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Compat
 {
-    internal sealed class DialogueTweakCompat : ModSystem
+    internal static class DialogueTweakCompat
     {
         private const string ExpeditionButtonId = "ExpeditionsReforged:Expedition";
         private const string ExpeditionButtonLocalizationKey = "Mods.ExpeditionsReforged.UI.ExpeditionButton";
 
-        public override void Load()
+        internal static void TryRegisterDialogueButtons()
         {
             if (Main.dedServ)
             {
@@ -42,10 +42,6 @@ namespace ExpeditionsReforged.Compat
                 // Fail silently if DialogueTweak changes its API or Mod.Call signature.
             }
         }
-                if (!NPCID.Sets.ActsLikeTownNPC[npcId])
-                {
-                    continue;
-                }
 
         private static bool IsNpcEligibleForExpeditions(NPC npc)
         {
