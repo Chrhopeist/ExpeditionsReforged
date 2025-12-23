@@ -108,6 +108,14 @@ namespace ExpeditionsReforged.Systems
         }
 
         /// <summary>
+        /// Client-only open helper that can lock the NPC filter to the provided NPC.
+        /// </summary>
+        public void OpenExpeditionUi(NPC npc)
+        {
+            OpenExpeditionUi(npc?.type);
+        }
+
+        /// <summary>
         /// Client-only open helper that can lock the NPC filter to a specific quest giver.
         /// </summary>
         public void OpenExpeditionUi(int? questGiverNpcId)

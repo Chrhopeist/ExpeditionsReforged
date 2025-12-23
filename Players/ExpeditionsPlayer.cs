@@ -7,6 +7,7 @@ using ExpeditionsReforged.Systems;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Chat;
+using Terraria.GameInput;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
@@ -99,6 +100,43 @@ namespace ExpeditionsReforged.Players
                 ReportConditionProgress(conditionId, 1);
                 _lastDaytime = Main.dayTime;
             }
+        }
+
+        public override void ProcessTriggers(TriggersSet triggersSet)
+        {
+            if (Main.dedServ || Player.whoAmI != Main.myPlayer)
+            {
+                return;
+            }
+
+            if (Main.gameMenu || Main.LocalPlayer is null)
+            {
+                return;
+            }
+
+            // Avoid toggling while the player is entering text or interacting with text boxes.
+            if (Main.drawingPlayerChat || Main.editSign || Main.editChest)
+            {
+                return;
+            }
+
+            ModKeybind openKeybind = ExpeditionsReforged.OpenExpeditionsKeybind;
+            if (openKeybind == null || !openKeybind.JustPressed)
+            {
+                return;
+            }
+
+            ExpeditionsSystem expeditionsSystem = ModContent.GetInstance<ExpeditionsSystem>();
+
+            if (ExpeditionUIOpen)
+            {
+                expeditionsSystem.CloseExpeditionUi(this);
+                return;
+            }
+
+            // When opening via hotkey, lock to the current talk NPC if one is active.
+            NPC? talkNpc = Player.TalkNPC;
+            expeditionsSystem.OpenExpeditionUi(talkNpc);
         }
 
         public override void SaveData(TagCompound tag)

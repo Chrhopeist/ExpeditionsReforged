@@ -2,6 +2,7 @@ using System.IO;
 using ExpeditionsReforged.Compat;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
+using Microsoft.Xna.Framework.Input;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -21,7 +22,8 @@ namespace ExpeditionsReforged
             if (!Main.dedServ)
             {
                 // Client-only keybind registration for toggling the Expeditions UI from Mod Controls.
-                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", "None");
+                // Default to the backslash key (OemPipe on US layouts) to match legacy controls.
+                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", Keys.OemPipe.ToString());
             }
         }
 
