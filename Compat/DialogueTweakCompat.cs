@@ -1,5 +1,6 @@
 using System;
 using ExpeditionsReforged.Systems;
+using ExpeditionsReforged.Players;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -42,9 +43,22 @@ namespace ExpeditionsReforged.Compat
                 }
 
                 // DialogueTweak Mod.Call string: "AddButton".
-                // The Action argument is labeled "Hover Action" in DialogueTweak's ModCall implementation.
+                // DialogueTweak only exposes a hover Action for custom buttons, so we detect clicks inside it.
                 // "Head" uses DialogueTweak's NPC head placeholder icon identifier.
-                Action hoverAction = () => Main.instance.MouseText("View available expeditions");
+                Action hoverAction = () =>
+                {
+                    Main.instance.MouseText("View available expeditions");
+
+                    if (!Main.mouseLeft || !Main.mouseLeftRelease)
+                    {
+                        return;
+                    }
+
+                    ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
+                    expeditionsPlayer.ExpeditionUIOpen = true;
+                    // Close the NPC chat panel so the Expeditions UI does not overlap DialogueTweak's panel.
+                    Main.CloseNPCChatOrSign();
+                };
                 Func<bool> availabilityPredicate = () => ExpeditionService.IsExpeditionGiver(npcId, Main.LocalPlayer);
 
                 // DialogueTweak may change its Mod.Call signature, so we attempt the predicate overload first
