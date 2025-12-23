@@ -85,6 +85,9 @@ private const float FilterRowPaddingPixels = 6f;
 private const float FilterButtonHeightPixels = 16f;
 // Keep consistent breathing room between top-row controls without relying on hardcoded offsets.
 private const float FilterButtonSpacingPixels = 32f;
+// Add extra horizontal gaps between availability-related filters to prevent overlap as labels change.
+private const float FilterGroupSpacingPixels = 28f;
+private const float FilterGroupButtonSpacingPixels = 20f;
 
 public override void OnInitialize()
 {
@@ -359,6 +362,8 @@ private void LayoutControlsRow(UIElement row, params UIElement[] children)
 {
 // Manually lay out controls so they stay on one row and shrink buttons as needed.
 float spacing = Scale(FilterButtonSpacingPixels);
+float groupSpacing = Scale(FilterGroupSpacingPixels);
+float groupButtonSpacing = Scale(FilterGroupButtonSpacingPixels);
 row.Recalculate();
 float rowWidth = row.GetInnerDimensions().Width;
 
@@ -463,6 +468,17 @@ element.Left.Set(x, 0f);
 element.Top.Set((row.GetInnerDimensions().Height - height) * 0.5f, 0f);
 element.Recalculate();
 x += width + spacing;
+// Add extra spacing between the NPC filter group and the availability filter to keep longer labels apart.
+if (element == _npcHeadButton)
+{
+x += groupSpacing;
+}
+
+// Keep availability-related filters farther apart so text changes never overlap.
+if (element == _completionButton || element == _repeatableButton || element == _trackedFilterButton)
+{
+x += groupButtonSpacing;
+}
 }
 }
 
