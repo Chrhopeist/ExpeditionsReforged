@@ -306,56 +306,30 @@ namespace ExpeditionsReforged.Players
             }
 
             ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
-            if (!registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition))
-            {
-                return false;
-            }
+            registry.TryGetExpedition(expeditionId, out ExpeditionDefinition definition);
 
             return TryStartExpedition(definition);
         }
 
         public bool TryStartExpedition(ExpeditionDefinition definition)
         {
-            if (definition is null)
-            {
-                return false;
-            }
-
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
-                ExpeditionsReforged.RequestStart(definition.Id);
+                if (definition != null)
+                {
+                    ExpeditionsReforged.RequestStart(definition.Id);
+                }
+
                 return false;
             }
 
-            if (!definition.IsRepeatable && _progressByExpeditionId.TryGetValue(definition.Id, out ExpeditionProgress existing) && existing.IsCompleted)
+            // Server-authoritative validation uses the shared acceptance rules.
+            if (!ExpeditionService.CanAcceptExpedition(Player, definition, out _))
             {
                 return false;
             }
 
-            // Validate progression/prerequisite gates on the server before starting the expedition.
-            if (!ExpeditionService.MeetsProgressionRequirement(Player, definition))
-            {
-                return false;
-            }
-
-            if (!ExpeditionService.MeetsPrerequisites(Player, definition))
-            {
-                return false;
-            }
-
-            ExpeditionProgress progress = GetOrCreateProgress(definition);
-            progress.IsOrphaned = false;
-            progress.IsActive = true;
-            progress.IsCompleted = false;
-            progress.RewardsClaimed = false;
-            progress.StartGameTick = Main.GameUpdateCount;
-            progress.ConditionProgress.Clear();
-
-            foreach (DeliverableDefinition deliverable in definition.Deliverables)
-            {
-                progress.ConditionProgress[deliverable.Id] = 0;
-            }
-
+            StartExpedition(definition.Id, Main.GameUpdateCount);
             return true;
         }
 

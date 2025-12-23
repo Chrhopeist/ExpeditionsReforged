@@ -859,9 +859,8 @@ bool isTracked = activePlayer != null &&
 
 bool isActive = progress?.IsActive == true && progress?.IsCompleted == false;
 bool canStart = activePlayer != null
-    // An expedition is available when it is not active and is either not completed or repeatable.
-    && !isActive
-    && (progress == null || definition.IsRepeatable || !progress.IsCompleted);
+    // Use the shared acceptance rule set so the UI stays read-only and in sync with the server.
+    && ExpeditionService.CanAcceptExpedition(activePlayer.Player, definition, out _);
 
 var startButton = CreateActionButton("Start", canStart, () =>
 {
@@ -1123,9 +1122,9 @@ private ExpeditionView BuildView(ExpeditionDefinition definition, ExpeditionsPla
 {
 ExpeditionProgress? progress = player?.ExpeditionProgressEntries.FirstOrDefault(entry => entry.ExpeditionId == definition.Id);
 
-bool isAvailable = progress == null
-    // An expedition is available when it is not active and is either not completed or repeatable.
-    || (!progress.IsActive && (definition.IsRepeatable || !progress.IsCompleted));
+bool isAvailable = player != null
+    // Align availability with the shared acceptance rule set for consistent UI sorting.
+    && ExpeditionService.CanAcceptExpedition(player.Player, definition, out _);
 bool isCompleted = progress?.IsCompleted == true;
 bool isActive = progress?.IsActive == true && !isCompleted;
 string status = progress switch

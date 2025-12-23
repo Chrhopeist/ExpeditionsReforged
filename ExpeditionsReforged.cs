@@ -223,7 +223,7 @@ namespace ExpeditionsReforged
         {
             Player player = Main.player[sender];
             ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
-            if (expeditionsPlayer.TryStartExpedition(expeditionId))
+            if (ExpeditionService.TryStartExpedition(player, expeditionId, out _))
             {
                 SendProgressSync(-1, player.whoAmI, expeditionsPlayer);
             }
