@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
@@ -9,10 +10,7 @@ namespace ExpeditionsReforged.Compat
 {
     internal static class DialogueTweakCompat
     {
-        private const string ExpeditionButtonId = "Expedition";
         private const string ExpeditionButtonText = "Expedition";
-        private const string TestButtonId = "DialogueTweakTest";
-        private const string TestButtonText = "Test";
 
         internal static void TryRegisterDialogueButtons()
         {
@@ -29,24 +27,18 @@ namespace ExpeditionsReforged.Compat
             // DialogueTweak integration is optional; fail silently if its API changes.
             try
             {
+                List<int> npcTypes = new() { NPCID.Guide };
+
                 dialogueTweak.Call(
-                    "RegisterButton",
-                    ExpeditionButtonId,
-                    ExpeditionButtonText,
-                    null,
-                    (Func<NPC, bool>)IsNpcEligibleForExpeditions,
-                    (Action<NPC>)HandleExpeditionButtonClick
+                    "AddButton",
+                    npcTypes,
+                    (Func<string>)(() => ExpeditionButtonText),
+                    (Func<string>)(() => null),
+                    (Action)HandleExpeditionButtonHover
                 );
 
-                // Proof-of-concept UI-only button for DialogueTweak integration.
-                dialogueTweak.Call(
-                    "RegisterButton",
-                    TestButtonId,
-                    TestButtonText,
-                    null,
-                    (Func<NPC, bool>)IsNpcEligibleForExpeditions,
-                    (Action<NPC>)HandleTestButtonClick
-                );
+                // Minimal logging to confirm DialogueTweak registration succeeded.
+                ExpeditionsReforged.Instance?.Logger.Info("DialogueTweak detected: registered expedition dialogue button.");
             }
             catch (Exception)
             {
@@ -54,15 +46,10 @@ namespace ExpeditionsReforged.Compat
             }
         }
 
-        private static bool IsNpcEligibleForExpeditions(NPC npc)
+        private static void HandleExpeditionButtonHover()
         {
-            // DialogueTweak should only show the Expeditions button for the Guide.
-            return npc != null && npc.type == NPCID.Guide;
-        }
-
-        private static void HandleExpeditionButtonClick(NPC npc)
-        {
-            if (Main.dedServ)
+            // DialogueTweak only supplies a hover callback, so treat a left click while hovering as activation.
+            if (Main.dedServ || !Main.mouseLeft || !Main.mouseLeftRelease)
             {
                 return;
             }
@@ -75,9 +62,5 @@ namespace ExpeditionsReforged.Compat
             ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi();
         }
 
-        private static void HandleTestButtonClick(NPC npc)
-        {
-            // No-op: this button is a UI-only proof of concept.
-        }
     }
 }
