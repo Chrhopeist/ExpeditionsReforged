@@ -14,12 +14,20 @@ namespace ExpeditionsReforged.Compat
 
         internal static void TryRegisterDialogueButtons()
         {
+            ExpeditionsReforged mod = ModContent.GetInstance<ExpeditionsReforged>();
+            // Temporary logging to confirm DialogueTweak integration attempts during debugging.
+            mod.Logger.Info("DialogueTweakCompat.TryRegisterDialogueButtons: starting registration.");
+
             if (Main.dedServ)
             {
+                mod.Logger.Info("DialogueTweakCompat.TryRegisterDialogueButtons: skipped on dedicated server.");
                 return;
             }
 
-            if (!ModLoader.TryGetMod("DialogueTweak", out Mod dialogueTweak))
+            bool hasDialogueTweak = ModLoader.TryGetMod("DialogueTweak", out Mod dialogueTweak);
+            mod.Logger.Info($"DialogueTweakCompat.TryRegisterDialogueButtons: DialogueTweak loaded = {hasDialogueTweak}.");
+
+            if (!hasDialogueTweak)
             {
                 return;
             }
@@ -29,6 +37,15 @@ namespace ExpeditionsReforged.Compat
             {
                 List<int> npcTypes = new() { NPCID.Guide };
 
+                // Proof-of-concept UI-only button for DialogueTweak integration.
+                dialogueTweak.Call(
+                    "AddButton",
+                    npcTypes,
+                    (Func<string>)(() => TestButtonText),
+                    (Func<string>)(() => null),
+                    (Action)HandleTestButtonHover
+                );
+
                 dialogueTweak.Call(
                     "AddButton",
                     npcTypes,
@@ -37,8 +54,8 @@ namespace ExpeditionsReforged.Compat
                     (Action)HandleExpeditionButtonHover
                 );
 
-                // Minimal logging to confirm DialogueTweak registration succeeded.
-                ExpeditionsReforged.Instance?.Logger.Info("DialogueTweak detected: registered expedition dialogue button.");
+                // Minimal logging to confirm the proof-of-concept button registration succeeded.
+                ExpeditionsReforged.Instance?.Logger.Info("DialogueTweak detected: registered Test dialogue button.");
             }
             catch (Exception)
             {
@@ -62,5 +79,9 @@ namespace ExpeditionsReforged.Compat
             ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi();
         }
 
+        private static void HandleTestButtonHover()
+        {
+            // No-op: this button is a UI-only proof of concept.
+        }
     }
 }
