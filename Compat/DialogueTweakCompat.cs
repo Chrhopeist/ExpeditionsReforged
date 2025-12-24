@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
@@ -40,23 +39,12 @@ namespace ExpeditionsReforged.Compat
             {
                 List<int> npcTypes = new() { NPCID.Guide };
 
-                // DialogueTweak accepts optional style parameters through the call payload.
-                // Constrain the expedition icon to a small UI size and nudge it to the left for alignment.
-                Dictionary<string, object> buttonStyle = new()
-                {
-                    ["iconScale"] = 0.10f,
-                    ["iconSize"] = new Vector2(20f, 20f),
-                    ["iconOffset"] = new Vector2(4f, 0f),
-                    ["iconMode"] = "Button"
-                };
-
                 dialogueTweak.Call(
                     "AddButton",
                     npcTypes,
                     (Func<string>)(() => ExpeditionButtonText),
                     (Func<string>)(() => ExpeditionButtonIconPath),
-                    (Action)HandleExpeditionButtonHover,
-                    buttonStyle
+                    (Action)HandleExpeditionButtonHover
                 );
 
                 // Minimal logging to confirm the proof-of-concept button registration succeeded.
