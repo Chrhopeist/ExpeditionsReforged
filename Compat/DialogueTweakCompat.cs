@@ -39,7 +39,7 @@ namespace ExpeditionsReforged.Compat
                     "AddButton",
                     npcTypes,
                     (Func<string>)(() => "Expedition"),
-                    (Func<string>)(() => "ExpeditionsReforged/Assets/UI/ExpeditionExclamation"),
+                    (Func<string>)(() => "ExpeditionsReforged/Assets/UI/UIExclamation"),
                     (Action)HandleExpeditionButtonHover
                 );
 
