@@ -27,6 +27,10 @@ namespace ExpeditionsReforged.Common.Globals
             }
 
             Player player = Main.LocalPlayer;
+            if (player == null || !player.active)
+            {
+                return;
+            }
             if (npc.type == NPCID.Guide)
             {
                 ModContent.GetInstance<Mod>().Logger.Info(
@@ -50,7 +54,17 @@ namespace ExpeditionsReforged.Common.Globals
                 return;
             }
 
-            if (!ShouldShowQuestMarker(npc, player))
+            bool showMarker;
+            try
+            {
+                showMarker = ShouldShowQuestMarker(npc, player);
+            }
+            catch
+            {
+                return;
+            }
+
+            if (!showMarker)
             {
                 return;
             }
@@ -65,9 +79,19 @@ namespace ExpeditionsReforged.Common.Globals
 
         private static bool ShouldShowQuestMarker(NPC npc, Player player)
         {
+            if (player == null)
+            {
+                return false;
+            }
+
+            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
+            if (registry == null || registry.Definitions == null)
+            {
+                return false;
+            }
+
             // Only show markers for expeditions the local player can accept from this specific NPC.
             ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
-            ExpeditionRegistry registry = ModContent.GetInstance<ExpeditionRegistry>();
 
             ModContent.GetInstance<Mod>().Logger.Info(
                 $"[QuestMarker] Checking expeditions for NPC type {npc.type}"
@@ -75,6 +99,11 @@ namespace ExpeditionsReforged.Common.Globals
 
             foreach (ExpeditionDefinition definition in registry.Definitions)
             {
+                if (definition == null)
+                {
+                    continue;
+                }
+
                 if (definition.QuestGiverNpcId != npc.type)
                 {
                     continue;
