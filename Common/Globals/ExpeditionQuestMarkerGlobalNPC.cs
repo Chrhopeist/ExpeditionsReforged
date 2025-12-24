@@ -19,15 +19,19 @@ namespace ExpeditionsReforged.Common.Globals
                 return;
 
             Texture2D markerTexture = ModContent.Request<Texture2D>("ExpeditionsReforged/Assets/UI/ExpeditionExclamation").Value;
-            Vector2 drawPosition = npc.Top + new Vector2(0f, -markerTexture.Height - 4f);
-            drawPosition -= screenPos;
+            float scale = 0.15f;
 
-            Vector2 origin = new Vector2(markerTexture.Width / 2f, markerTexture.Height);
-            float scale = 0.25f;
+            Vector2 worldPosition = npc.Top + new Vector2(0f, -6f);
+            Vector2 screenPosition = worldPosition - screenPos;
+
+            Vector2 origin = new Vector2(
+                markerTexture.Width / 2f,
+                markerTexture.Height
+            );
 
             spriteBatch.Draw(
                 markerTexture,
-                drawPosition + origin,
+                screenPosition,
                 null,
                 Color.White,
                 0f,
