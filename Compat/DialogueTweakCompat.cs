@@ -10,10 +10,6 @@ namespace ExpeditionsReforged.Compat
 {
     internal static class DialogueTweakCompat
     {
-        private const string ExpeditionButtonText = "Expedition";
-        // DialogueTweak expects icon texture paths to include the mod name prefix.
-        private const string ExpeditionButtonIconPath = "ExpeditionsReforged/Assets/UI/ExpeditionExclamation";
-
         internal static void TryRegisterDialogueButtons()
         {
             ExpeditionsReforged mod = ModContent.GetInstance<ExpeditionsReforged>();
@@ -42,8 +38,8 @@ namespace ExpeditionsReforged.Compat
                 dialogueTweak.Call(
                     "AddButton",
                     npcTypes,
-                    (Func<string>)(() => ExpeditionButtonText),
-                    (Func<string>)(() => ExpeditionButtonIconPath),
+                    (Func<string>)(() => "Expedition"),
+                    (Func<string>)(() => "ExpeditionsReforged/Assets/UI/ExpeditionExclamation"),
                     (Action)HandleExpeditionButtonHover
                 );
 
