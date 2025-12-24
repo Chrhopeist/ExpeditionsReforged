@@ -22,7 +22,20 @@ namespace ExpeditionsReforged.Common.Globals
             Vector2 drawPosition = npc.Top + new Vector2(0f, -markerTexture.Height - 4f);
             drawPosition -= screenPos;
 
-            spriteBatch.Draw(markerTexture, drawPosition, Color.White);
+            Vector2 origin = new Vector2(markerTexture.Width / 2f, markerTexture.Height);
+            float scale = 0.25f;
+
+            spriteBatch.Draw(
+                markerTexture,
+                drawPosition + origin,
+                null,
+                Color.White,
+                0f,
+                origin,
+                scale,
+                SpriteEffects.None,
+                0f
+            );
         }
     }
 }
