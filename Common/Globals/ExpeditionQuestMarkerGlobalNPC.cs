@@ -18,7 +18,7 @@ namespace ExpeditionsReforged.Common.Globals
             if (npc.type != NPCID.Guide)
                 return;
 
-            Texture2D markerTexture = ModContent.Request<Texture2D>("ExpeditionsReforged/Assets/UI/ExpeditionExclamation").Value;
+            Texture2D markerTexture = ModContent.Request<Texture2D>("ExpeditionsReforged/Assets/UI/OverheadQuestExclamation").Value;
             float scale = 0.05f;
 
             Vector2 worldPosition = npc.Top + new Vector2(0f, -6f);
