@@ -4,7 +4,6 @@ using ExpeditionsReforged.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
-using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace ExpeditionsReforged.Common.Globals
@@ -16,11 +15,6 @@ namespace ExpeditionsReforged.Common.Globals
 
         public override void PostDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
         {
-            if (npc.type == NPCID.Guide)
-            {
-                ModContent.GetInstance<Mod>().Logger.Info("[QuestMarker] PostDraw hit for Guide");
-            }
-
             if (npc is null || !npc.active)
             {
                 return;
@@ -31,12 +25,6 @@ namespace ExpeditionsReforged.Common.Globals
             {
                 return;
             }
-            if (npc.type == NPCID.Guide)
-            {
-                ModContent.GetInstance<Mod>().Logger.Info(
-                    $"[QuestMarker] Guide active={npc.active}, playerActive={Main.LocalPlayer?.active}"
-                );
-            }
 
             if (player?.active != true)
             {
@@ -44,10 +32,6 @@ namespace ExpeditionsReforged.Common.Globals
             }
 
             bool isGiver = ExpeditionService.IsExpeditionGiver(npc.type, player);
-            if (npc.type == NPCID.Guide)
-            {
-                ModContent.GetInstance<Mod>().Logger.Info($"[QuestMarker] IsExpeditionGiver={isGiver}");
-            }
 
             if (!isGiver)
             {
@@ -93,10 +77,6 @@ namespace ExpeditionsReforged.Common.Globals
             // Only show markers for expeditions the local player can accept from this specific NPC.
             ExpeditionsPlayer expeditionsPlayer = player.GetModPlayer<ExpeditionsPlayer>();
 
-            ModContent.GetInstance<Mod>().Logger.Info(
-                $"[QuestMarker] Checking expeditions for NPC type {npc.type}"
-            );
-
             foreach (ExpeditionDefinition definition in registry.Definitions)
             {
                 if (definition == null)
@@ -109,18 +89,8 @@ namespace ExpeditionsReforged.Common.Globals
                     continue;
                 }
 
-                if (definition.QuestGiverNpcId == npc.type)
-                {
-                    ModContent.GetInstance<Mod>().Logger.Info(
-                        $"[QuestMarker] Found expedition {definition.Id} for NPC {npc.type}"
-                    );
-                }
-
                 if (ExpeditionService.CanAcceptExpedition(player, definition, out _))
                 {
-                    ModContent.GetInstance<Mod>().Logger.Info(
-                        $"[QuestMarker] CanAcceptExpedition TRUE for {definition.Id}"
-                    );
                     return true;
                 }
             }
