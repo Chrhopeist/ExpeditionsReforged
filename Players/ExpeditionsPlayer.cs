@@ -109,19 +109,13 @@ namespace ExpeditionsReforged.Players
                 return;
             }
 
-            if (Main.gameMenu || Main.LocalPlayer is null)
-            {
-                return;
-            }
-
             // Avoid toggling while the player is entering text or interacting with text boxes.
-            if (Main.drawingPlayerChat || Main.editSign || Main.editChest)
+            if (!string.IsNullOrEmpty(Main.chatText) || Main.editSign || Main.editChest)
             {
                 return;
             }
 
-            ModKeybind openKeybind = ExpeditionsReforged.OpenExpeditionsKeybind;
-            if (openKeybind == null || !openKeybind.JustPressed)
+            if (ExpeditionsReforged.OpenExpeditionsKeybind?.JustPressed != true)
             {
                 return;
             }
@@ -135,8 +129,7 @@ namespace ExpeditionsReforged.Players
             }
 
             // When opening via hotkey, lock to the current talk NPC if one is active.
-            NPC? talkNpc = Player.TalkNPC;
-            expeditionsSystem.OpenExpeditionUi(talkNpc);
+            expeditionsSystem.OpenExpeditionUi(Player.TalkNPC?.type);
         }
 
         public override void SaveData(TagCompound tag)
