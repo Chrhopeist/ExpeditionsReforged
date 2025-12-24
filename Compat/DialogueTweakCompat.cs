@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using ExpeditionsReforged.Players;
 using ExpeditionsReforged.Systems;
 using Terraria;
 using Terraria.ID;
@@ -60,14 +59,9 @@ namespace ExpeditionsReforged.Compat
                 return;
             }
 
-            ExpeditionsPlayer expeditionsPlayer = Main.LocalPlayer.GetModPlayer<ExpeditionsPlayer>();
-            // Track the requested UI state even if the UI layer is recreated later.
-            expeditionsPlayer.ExpeditionUIOpen = true;
-
             // Open the Expeditions UI without interfering with the NPC chat window.
-            // Lock the NPC filter to the quest giver currently being talked to.
-            NPC? talkNpc = Main.LocalPlayer?.TalkNPC;
-            ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi(talkNpc);
+            // Delegate state management to ExpeditionsSystem to keep multiplayer-safe.
+            ModContent.GetInstance<ExpeditionsSystem>().OpenExpeditionUi(Main.LocalPlayer?.TalkNPC);
         }
 
         private static void HandleTestButtonHover()
