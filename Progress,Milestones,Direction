@@ -89,3 +89,14 @@ A scalable UI
 A vanilla-aligned NPC interaction flow
 
 What’s left is polish, content depth, and UX refinement, not foundational risk.
+
+
+
+---Changelog
+12.24.25 
+  -Added ability to open Expedition UI using \ hotkey
+  -Added Quest icon above NPC
+    -Need to map to availability of quest
+  -Added Quest icon next to Expedtion text in NPC chat, expedition button
+  -Added filterable quest npc head - clicking goes forward, right-clicking goes back
+    -Need to check quest acceptance at that NPC
