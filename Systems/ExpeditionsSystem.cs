@@ -57,37 +57,48 @@ namespace ExpeditionsReforged.Systems
             var clientConfig = ModContent.GetInstance<ExpeditionsClientConfig>();
 
             int mouseTextIndex = layers.FindIndex(layer => layer.Name.Equals("Vanilla: Mouse Text"));
+            int inventoryIndex = layers.FindIndex(layer => layer.Name.Equals("Vanilla: Inventory"));
 
-            if (mouseTextIndex != -1)
+            bool trackerVisible = expeditionsPlayer != null && (expeditionsPlayer.TrackerUIOpen || (clientConfig.TrackerAutoShow && !string.IsNullOrWhiteSpace(expeditionsPlayer.TrackedExpeditionId)));
+
+            // Draw the tracker behind core UI (hotbar/inventory) so it does not cover other panels.
+            int trackerInsertIndex = inventoryIndex != -1 ? inventoryIndex : mouseTextIndex;
+            if (trackerInsertIndex == -1)
             {
-                bool trackerVisible = expeditionsPlayer != null && (expeditionsPlayer.TrackerUIOpen || (clientConfig.TrackerAutoShow && !string.IsNullOrWhiteSpace(expeditionsPlayer.TrackedExpeditionId)));
-                layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
-                    "ExpeditionsReforged: Tracker UI",
-                    delegate
-                    {
-                        if (trackerVisible && _trackerInterface?.CurrentState != null)
-                        {
-                            _trackerInterface.Draw(Main.spriteBatch, new GameTime());
-                        }
-
-                        return true;
-                    },
-                    InterfaceScaleType.UI));
-
-                layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
-                    "ExpeditionsReforged: Expedition UI",
-                    delegate
-                    {
-                        if (expeditionsPlayer != null && expeditionsPlayer.ExpeditionUIOpen && _expeditionInterface?.CurrentState != null)
-                        {
-                            _expeditionInterface.Draw(Main.spriteBatch, new GameTime());
-                        }
-
-                        return true;
-                    },
-                    InterfaceScaleType.UI));
-
+                trackerInsertIndex = layers.Count;
             }
+
+            layers.Insert(trackerInsertIndex, new LegacyGameInterfaceLayer(
+                "ExpeditionsReforged: Tracker UI",
+                delegate
+                {
+                    if (trackerVisible && _trackerInterface?.CurrentState != null)
+                    {
+                        _trackerInterface.Draw(Main.spriteBatch, new GameTime());
+                    }
+
+                    return true;
+                },
+                InterfaceScaleType.UI));
+
+            int expeditionInsertIndex = mouseTextIndex != -1 ? mouseTextIndex : layers.Count;
+            if (trackerInsertIndex <= expeditionInsertIndex)
+            {
+                expeditionInsertIndex++;
+            }
+
+            layers.Insert(expeditionInsertIndex, new LegacyGameInterfaceLayer(
+                "ExpeditionsReforged: Expedition UI",
+                delegate
+                {
+                    if (expeditionsPlayer != null && expeditionsPlayer.ExpeditionUIOpen && _expeditionInterface?.CurrentState != null)
+                    {
+                        _expeditionInterface.Draw(Main.spriteBatch, new GameTime());
+                    }
+
+                    return true;
+                },
+                InterfaceScaleType.UI));
         }
 
         /// <summary>

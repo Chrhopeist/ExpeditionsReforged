@@ -141,7 +141,8 @@ public class TrackerUI : UIState
 
         _contentList.Clear();
 
-        _contentList.Add(new UIText("Tracked Expedition", 0.95f * _scale, true));
+        float headerScale = 0.95f * 0.5f * _scale; // Halve the main header to reduce footprint near the hotbar
+        _contentList.Add(new UIText("Tracked Expedition", headerScale, true));
         _contentList.Add(new UIText(definition.DisplayName, 0.9f * _scale, true));
         _contentList.Add(new UIText(definition.Description, 0.85f * _scale));
         _contentList.Add(new UIText($"Category: {definition.CategoryName}", 0.85f * _scale));
@@ -158,7 +159,8 @@ public class TrackerUI : UIState
 
         if (definition.Deliverables.Count > 0)
         {
-            _contentList.Add(new UIText("Objectives", 0.85f * _scale, true));
+            float objectivesScale = 0.85f * 0.5f * _scale; // Match the reduced header scale for subsection titles
+            _contentList.Add(new UIText("Objectives", objectivesScale, true));
             foreach (var deliverable in definition.Deliverables)
             {
                 int value = progress?.ConditionProgress.TryGetValue(deliverable.Id, out int current) == true ? current : 0;
