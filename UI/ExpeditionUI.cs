@@ -883,48 +883,57 @@ bool canStart = activePlayer != null
     // Use the shared acceptance rule set so the UI stays read-only and in sync with the server.
     && ExpeditionService.CanAcceptExpedition(activePlayer.Player, definition, out _);
 
-        var startButton = CreateActionButton("Start", canStart, () =>
+UITextPanel<string> startButton = CreateActionButton("Start", canStart, null);
+
+bool canTrack = activePlayer != null && (isTracked || progress != null);
+UITextPanel<string> trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, null);
+if (canStart)
+{
+    startButton.OnLeftClick += (_, _) =>
+    {
+        if (activePlayer == null)
         {
-            if (activePlayer == null)
-            {
-                return;
-            }
+            return;
+        }
 
-            SetActionButtonState(startButton, "Starting...", false);
+        SetActionButtonState(startButton, "Starting...", false);
 
-            // Use the existing server-authoritative request flow to start the expedition.
-            bool started = activePlayer.TryStartExpedition(definition.Id);
+        // Use the existing server-authoritative request flow to start the expedition.
+        bool started = activePlayer.TryStartExpedition(definition.Id);
 
-            // In single-player the expedition starts immediately; refresh the details so the footer updates without closing.
-            if (started)
-            {
-                HandleSelectionChanged(definition.Id);
-            }
+        // In single-player the expedition starts immediately; refresh the details so the footer updates without closing.
+        if (started)
+        {
+            HandleSelectionChanged(definition.Id);
+        }
 
-            RequestExpeditionListRefresh();
-        });
+        RequestExpeditionListRefresh();
+    };
+}
 AddTooltip(startButton, canStart ? "Start the selected expedition." : "Accept expeditions from town NPCs. Talk to NPCs to accept or turn in expeditions.");
 startButton.Left.Set(0f, 0f);
 _detailsButtonRow.Append(startButton);
 
-bool canTrack = activePlayer != null && (isTracked || progress != null);
-        var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
+if (canTrack)
+{
+    trackButton.OnLeftClick += (_, _) =>
+    {
+        if (activePlayer == null)
         {
-            if (activePlayer == null)
-            {
-                return;
-            }
+            return;
+        }
 
-            SetActionButtonState(trackButton, isTracked ? "Untracking..." : "Tracking...", false);
+        SetActionButtonState(trackButton, isTracked ? "Untracking..." : "Tracking...", false);
 
-            if (activePlayer.TryTrackExpedition(isTracked ? string.Empty : definition.Id))
-            {
-                // Refresh the details immediately so the button label flips to the new state without reopening the panel.
-                HandleSelectionChanged(definition.Id);
-            }
+        if (activePlayer.TryTrackExpedition(isTracked ? string.Empty : definition.Id))
+        {
+            // Refresh the details immediately so the button label flips to the new state without reopening the panel.
+            HandleSelectionChanged(definition.Id);
+        }
 
-            RequestExpeditionListRefresh();
-        });
+        RequestExpeditionListRefresh();
+    };
+}
 // Rewards are delivered via the quest-giver NPC; keep the UI read-only for completion status.
 trackButton.Left.Set(Scale(132f), 0f);
 _detailsButtonRow.Append(trackButton);
