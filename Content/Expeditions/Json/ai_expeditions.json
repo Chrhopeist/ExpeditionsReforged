@@ -1,0 +1,175 @@
+[
+  {
+    "id": "ai_torchlight_welcome",
+    "displayNameKey": "Torchlight Welcome",
+    "descriptionKey": "Gather the basics so we can keep the camp lit through the night.",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 7200,
+    "difficulty": 1,
+    "minProgressionTier": "1",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "questGiverNpcId": 22,
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": "9",
+        "requiredCount": 30,
+        "consumesItems": true,
+        "description": "Bring back 30 Wood for construction."
+      },
+      {
+        "id": "23",
+        "requiredCount": 15,
+        "consumesItems": true,
+        "description": "Collect 15 Gel for torches."
+      }
+    ],
+    "rewards": [
+      {
+        "id": "item:8",
+        "minStack": 20,
+        "maxStack": 20,
+        "dropChance": 1.0
+      }
+    ],
+    "dailyRewards": []
+  },
+  {
+    "id": "ai_stonebound_shelter",
+    "displayNameKey": "Stonebound Shelter",
+    "descriptionKey": "A sturdier base keeps everyone safe. Stock up on solid blocks.",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 9000,
+    "difficulty": 2,
+    "minProgressionTier": "1",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "questGiverNpcId": 17,
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": "3",
+        "requiredCount": 25,
+        "consumesItems": true,
+        "description": "Mine 25 Stone Blocks for stronger walls."
+      },
+      {
+        "id": "9",
+        "requiredCount": 15,
+        "consumesItems": true,
+        "description": "Gather 15 extra Wood for crafting benches."
+      }
+    ],
+    "rewards": [
+      {
+        "id": "item:8",
+        "minStack": 15,
+        "maxStack": 25,
+        "dropChance": 1.0
+      }
+    ],
+    "dailyRewards": []
+  },
+  {
+    "id": "ai_gel_cleanup",
+    "displayNameKey": "Gel Cleanup",
+    "descriptionKey": "Slimy trails everywhere! Bring in the gel so we can put it to use.",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 6600,
+    "difficulty": 2,
+    "minProgressionTier": "1",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "questGiverNpcId": 18,
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": "23",
+        "requiredCount": 25,
+        "consumesItems": true,
+        "description": "Collect 25 Gel from nearby slimes."
+      }
+    ],
+    "rewards": [
+      {
+        "id": "item:8",
+        "minStack": 15,
+        "maxStack": 25,
+        "dropChance": 1.0
+      }
+    ],
+    "dailyRewards": []
+  },
+  {
+    "id": "ai_campfire_setup",
+    "displayNameKey": "Campfire Setup",
+    "descriptionKey": "Let's keep spirits high with a warm campfire and some spare torches.",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 8400,
+    "difficulty": 1,
+    "minProgressionTier": "1",
+    "isRepeatable": false,
+    "isDailyEligible": false,
+    "questGiverNpcId": 22,
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": "9",
+        "requiredCount": 20,
+        "consumesItems": true,
+        "description": "Gather 20 Wood for a campfire spot."
+      },
+      {
+        "id": "8",
+        "requiredCount": 10,
+        "consumesItems": true,
+        "description": "Craft or collect 10 Torches to keep nearby rooms lit."
+      }
+    ],
+    "rewards": [
+      {
+        "id": "item:8",
+        "minStack": 15,
+        "maxStack": 15,
+        "dropChance": 1.0
+      }
+    ],
+    "dailyRewards": []
+  },
+  {
+    "id": "ai_forest_forage",
+    "displayNameKey": "Forest Forage",
+    "descriptionKey": "Stock the pantry with quick snacks so we can push deeper tomorrow.",
+    "category": "Forest",
+    "rarity": 1,
+    "durationTicks": 7800,
+    "difficulty": 1,
+    "minProgressionTier": "1",
+    "isRepeatable": true,
+    "isDailyEligible": true,
+    "questGiverNpcId": 17,
+    "prerequisites": [],
+    "deliverables": [
+      {
+        "id": "5",
+        "requiredCount": 12,
+        "consumesItems": true,
+        "description": "Pick 12 Mushrooms for travel rations."
+      }
+    ],
+    "rewards": [
+      {
+        "id": "item:8",
+        "minStack": 10,
+        "maxStack": 15,
+        "dropChance": 1.0
+      }
+    ],
+    "dailyRewards": []
+  }
+]
