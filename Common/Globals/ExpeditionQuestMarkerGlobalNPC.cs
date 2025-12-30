@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using ExpeditionsReforged.Systems;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -17,6 +18,18 @@ namespace ExpeditionsReforged.Common.Globals
             // Check specific Guide type
             if (npc.type != NPCID.Guide)
                 return;
+
+            Player player = Main.LocalPlayer;
+            if (player?.active != true || player.dead)
+            {
+                return;
+            }
+
+            // Mirror the expedition UI availability rules so the marker only appears when the Guide can offer a quest.
+            if (!ExpeditionService.IsExpeditionGiver(npc.type, player))
+            {
+                return;
+            }
 
             Texture2D markerTexture = ModContent.Request<Texture2D>("ExpeditionsReforged/Assets/UI/OverheadQuestExclamation").Value;
             float scale = 0.05f;
