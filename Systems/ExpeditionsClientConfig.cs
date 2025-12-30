@@ -25,7 +25,7 @@ namespace ExpeditionsReforged.Systems
         [Label("Tracker alpha")]
         public float TrackerAlpha { get; set; }
 
-        [DefaultValue(typeof(Vector2), "600, 200")]
+        [DefaultValue(typeof(Vector2), "32, 120")]
         [Label("Tracker position (pixels)")]
         public Vector2 TrackerPosition { get; set; }
 
