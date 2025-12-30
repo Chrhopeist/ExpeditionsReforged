@@ -668,17 +668,19 @@ _entries.Add(entry);
 _expeditionList.Add(entry);
 }
 
-_rarityMarkers.SetEntries(_entries.Select(entry => (entry.View, entry.Height.Pixels + _expeditionList.ListPadding)).ToList());
+        _rarityMarkers.SetEntries(_entries.Select(entry => (entry.View, entry.Height.Pixels + _expeditionList.ListPadding)).ToList());
 
-if (!hasDefinitions)
-{
-// Clear any stale selection details when there are no expeditions to display.
-_selectedExpeditionId = string.Empty;
-ShowPlaceholder();
-}
+        if (!hasDefinitions)
+        {
+            // Clear any stale selection details when there are no expeditions to display.
+            _selectedExpeditionId = string.Empty;
+            ShowPlaceholder();
+        }
 
-return true;
-}
+        RestoreSelectionAfterPopulate();
+
+        return true;
+    }
 
 private void BuildDetailsPanel()
 {
@@ -724,9 +726,9 @@ _detailsPanel.Append(_detailsFooter);
 ShowPlaceholder();
 }
 
-private void HandleSelectionChanged(string expeditionId)
-{
-_selectedExpeditionId = expeditionId;
+    private void HandleSelectionChanged(string expeditionId)
+    {
+        _selectedExpeditionId = expeditionId;
 
 var registry = ModContent.GetInstance<ExpeditionRegistry>();
 
@@ -739,11 +741,29 @@ else
 ShowPlaceholder();
 }
 
-foreach (var entry in _entries)
-{
-entry.SetSelected(entry.ExpeditionId == _selectedExpeditionId);
-}
-}
+        foreach (var entry in _entries)
+        {
+            entry.SetSelected(entry.ExpeditionId == _selectedExpeditionId);
+        }
+    }
+
+    private void RestoreSelectionAfterPopulate()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedExpeditionId))
+        {
+            return;
+        }
+
+        bool entryExists = _entries.Any(entry => entry.ExpeditionId == _selectedExpeditionId);
+        if (!entryExists)
+        {
+            _selectedExpeditionId = string.Empty;
+            ShowPlaceholder();
+            return;
+        }
+
+        HandleSelectionChanged(_selectedExpeditionId);
+    }
 
 private void ShowPlaceholder()
 {
@@ -863,27 +883,48 @@ bool canStart = activePlayer != null
     // Use the shared acceptance rule set so the UI stays read-only and in sync with the server.
     && ExpeditionService.CanAcceptExpedition(activePlayer.Player, definition, out _);
 
-var startButton = CreateActionButton("Start", canStart, () =>
-{
-    if (activePlayer == null)
-    {
-        return;
-    }
+        var startButton = CreateActionButton("Start", canStart, () =>
+        {
+            if (activePlayer == null)
+            {
+                return;
+            }
 
-    // Use the existing server-authoritative request flow to start the expedition.
-    activePlayer.TryStartExpedition(definition.Id);
-    RequestExpeditionListRefresh();
-});
+            SetActionButtonState(startButton, "Starting...", false);
+
+            // Use the existing server-authoritative request flow to start the expedition.
+            bool started = activePlayer.TryStartExpedition(definition.Id);
+
+            // In single-player the expedition starts immediately; refresh the details so the footer updates without closing.
+            if (started)
+            {
+                HandleSelectionChanged(definition.Id);
+            }
+
+            RequestExpeditionListRefresh();
+        });
 AddTooltip(startButton, canStart ? "Start the selected expedition." : "Accept expeditions from town NPCs. Talk to NPCs to accept or turn in expeditions.");
 startButton.Left.Set(0f, 0f);
 _detailsButtonRow.Append(startButton);
 
 bool canTrack = activePlayer != null && (isTracked || progress != null);
-var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
-{
-    activePlayer?.TryTrackExpedition(isTracked ? string.Empty : definition.Id);
-    RequestExpeditionListRefresh();
-});
+        var trackButton = CreateActionButton(isTracked ? "Untrack" : "Track", canTrack, () =>
+        {
+            if (activePlayer == null)
+            {
+                return;
+            }
+
+            SetActionButtonState(trackButton, isTracked ? "Untracking..." : "Tracking...", false);
+
+            if (activePlayer.TryTrackExpedition(isTracked ? string.Empty : definition.Id))
+            {
+                // Refresh the details immediately so the button label flips to the new state without reopening the panel.
+                HandleSelectionChanged(definition.Id);
+            }
+
+            RequestExpeditionListRefresh();
+        });
 // Rewards are delivered via the quest-giver NPC; keep the UI read-only for completion status.
 trackButton.Left.Set(Scale(132f), 0f);
 _detailsButtonRow.Append(trackButton);
@@ -1170,24 +1211,32 @@ bool isTracked = player != null && string.Equals(player.TrackedExpeditionId, def
 return new ExpeditionView(definition.Id, definition.DisplayName, definition.CategoryName, status, isAvailable, isCompleted, isActive, definition.Rarity, definition.DurationTicks, definition.Difficulty, definition.QuestGiverNpcId, definition.IsRepeatable, progressFraction, isTracked);
 }
 
-private UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)
-{
-var button = new UITextPanel<string>(label, 0.85f * _uiScale, true)
-{
-Width = StyleDimension.FromPixels(Scale(130f)),
+    private UITextPanel<string> CreateActionButton(string label, bool enabled, Action? onClick)
+    {
+        var button = new UITextPanel<string>(label, 0.85f * _uiScale, true)
+        {
+            Width = StyleDimension.FromPixels(Scale(130f)),
 Height = StyleDimension.FromPixels(Scale(32f)),
 BackgroundColor = enabled ? new Color(80, 104, 192) : new Color(60, 60, 60),
 BorderColor = enabled ? new Color(110, 140, 220) : new Color(90, 90, 90),
 TextColor = enabled ? Color.White : Color.Gray
 };
 
-if (enabled && onClick != null)
-{
-button.OnLeftClick += (_, _) => onClick();
-}
+        if (enabled && onClick != null)
+        {
+            button.OnLeftClick += (_, _) => onClick();
+        }
 
-return button;
-}
+        return button;
+    }
+
+    private static void SetActionButtonState(UITextPanel<string> button, string label, bool enabled)
+    {
+        button.SetText(label);
+        button.BackgroundColor = enabled ? new Color(80, 104, 192) : new Color(60, 60, 60);
+        button.BorderColor = enabled ? new Color(110, 140, 220) : new Color(90, 90, 90);
+        button.TextColor = enabled ? Color.White : Color.Gray;
+    }
 
 private UIElement CreateProgressRow(string label, int current, int required)
 {
