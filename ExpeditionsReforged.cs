@@ -23,7 +23,7 @@ namespace ExpeditionsReforged
             {
                 // Client-only keybind registration for toggling the Expeditions UI from Mod Controls.
                 // Default to the backslash key (OemPipe on US layouts) to match legacy controls.
-                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "Open Expeditions", Keys.OemPipe.ToString());
+                OpenExpeditionsKeybind = KeybindLoader.RegisterKeybind(this, "OpenExpeditions", "\\");
             }
         }
 

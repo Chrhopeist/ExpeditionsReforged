@@ -34,6 +34,11 @@
       "Messages": {
         "ExpeditionCompleted": "Expedition completed!"
       },
+      "Keybinds": {
+        "OpenExpeditions": {
+          "DisplayName": "Open Expeditions"
+        }
+      },
       "UI": {
         "ExpeditionButton": "Expedition"
       }
